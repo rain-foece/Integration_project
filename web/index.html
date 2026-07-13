@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电子数据取证工具集成系统</title>
+<style>
+:root {
+  --bg: #0a0e17;
+  --bg2: #111827;
+  --bg3: #1a2332;
+  --ink: #e2e8f0;
+  --muted: #8899aa;
+  --rule: #1e293b;
+  --accent: #06b6d4;
+  --accent2: #8b5cf6;
+  --success: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px; line-height: 1.6;
+  color: var(--ink); background: var(--bg);
+  display: flex; min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px; background: var(--bg2);
+  border-right: 1px solid var(--rule);
+  display: flex; flex-direction: column;
+  position: fixed; top:0; left:0; bottom:0; z-index: 100;
+}
+.sidebar-logo {
+  padding: 1.2rem 1rem; font-size: 1rem; font-weight: 700;
+  color: var(--accent); border-bottom: 1px solid var(--rule);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.sidebar-logo .icon { font-size: 1.4rem; }
+.sidebar-nav { flex: 1; padding: 0.5rem 0; }
+.sidebar-nav a {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.7rem 1.2rem; color: var(--muted);
+  text-decoration: none; font-size: 0.9rem;
+  transition: all 0.2s; border-left: 3px solid transparent;
+}
+.sidebar-nav a:hover, .sidebar-nav a.active {
+  color: var(--ink); background: rgba(6,182,212,0.08);
+  border-left-color: var(--accent);
+}
+.sidebar-nav a .nav-icon { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+.sidebar-footer {
+  padding: 1rem; border-top: 1px solid var(--rule);
+  font-size: 0.75rem; color: var(--muted);
+}
+
+/* Main */
+.main {
+  margin-left: 220px; flex: 1; padding: 1.5rem 2rem;
+}
+.page-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+.page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--ink); }
+.page-header p { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+
+/* Stats Grid */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1rem; margin-bottom: 1.5rem;
+}
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 1.2rem;
+}
+.stat-card .stat-num { font-size: 2rem; font-weight: 700; color: var(--accent); }
+.stat-card .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+/* Cards */
+.card {
+  background: var(--bg2); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;
+}
+.card h3 { font-size: 1rem; color: var(--accent); margin-bottom: 0.8rem; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th {
+  text-align: left; padding: 0.6rem 0.8rem;
+  color: var(--accent); font-weight: 600; font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--rule); background: var(--bg3);
+}
+td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); }
+tr:hover td { background: rgba(6,182,212,0.03); }
+
+/* Badges */
+.badge {
+  display: inline-block; font-size: 0.7rem; font-weight: 600;
+  padding: 0.15rem 0.5rem; border-radius: 4px;
+}
+.badge-accent { background: rgba(6,182,212,0.15); color: var(--accent); }
+.badge-purple { background: rgba(139,92,246,0.15); color: var(--accent2); }
+.badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
+.badge-warn { background: rgba(245,158,11,0.15); color: var(--warn); }
+.badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.45rem 1rem; border-radius: 6px; font-size: 0.85rem;
+  font-weight: 600; cursor: pointer; border: none; text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: #0891b2; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-outline { background: transparent; border: 1px solid var(--rule); color: var(--ink); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+
+/* Forms */
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 0.5rem 0.7rem; border-radius: 6px;
+  border: 1px solid var(--rule); background: var(--bg);
+  color: var(--ink); font-size: 0.9rem;
+}
+.form-group input:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--accent);
+}
+
+/* Modal */
+.modal-bg {
+  display: none; position: fixed; top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center;
+}
+.modal-bg.show { display: flex; }
+.modal {
+  background: var(--bg2); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 1.5rem; width: 90%; max-width: 560px; max-height: 80vh; overflow-y: auto;
+}
+.modal h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--accent); }
+.modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+
+/* Tool Grid */
+.tool-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;
+}
+.tool-card {
+  background: var(--bg2); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 1.2rem; cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s; position: relative; overflow: hidden;
+}
+.tool-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.tool-card.builtin { border-left: 3px solid var(--success); }
+.tool-card.external { border-left: 3px solid var(--warn); }
+.tool-card .tool-badge {
+  position: absolute; top: 10px; right: 10px; font-size: 0.65rem;
+  padding: 2px 8px; border-radius: 4px; font-weight: 600;
+}
+.tool-card .tool-badge.builtin { background: rgba(16,185,129,0.2); color: var(--success); }
+.tool-card .tool-badge.external { background: rgba(245,158,11,0.2); color: var(--warn); }
+.tool-card .tool-name { font-weight: 700; color: var(--ink); font-size: 0.95rem; }
+.tool-card .tool-desc { font-size: 0.78rem; color: var(--muted); margin: 0.4rem 0; line-height: 1.5; }
+.tool-card .tool-caps { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+.tool-card .tool-links { margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px solid var(--rule); display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.tool-card .tool-links a {
+  font-size: 0.72rem; color: var(--accent); text-decoration: none;
+  padding: 3px 10px; border: 1px solid var(--accent); border-radius: 4px;
+  transition: all 0.2s;
+}
+.tool-card .tool-links a:hover { background: var(--accent); color: #fff; }
+.tool-card .tool-version { font-size: 0.68rem; color: var(--muted); margin-top: 0.3rem; }
+
+/* Tool detail expand */
+.tool-card .tool-detail {
+  max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+  font-size: 0.76rem; color: var(--muted); line-height: 1.6; margin-top: 0;
+}
+.tool-card.expanded .tool-detail { max-height: 300px; margin-top: 0.6rem; }
+.tool-card .tool-detail p { margin: 0.3rem 0; }
+
+/* Page sections */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Loading */
+.loading { text-align: center; padding: 3rem; color: var(--muted); }
+.spinner {
+  display: inline-block; width: 2rem; height: 2rem;
+  border: 3px solid var(--rule); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
+.tab {
+  padding: 0.5rem 1rem; cursor: pointer; color: var(--muted);
+  border-bottom: 2px solid transparent; font-size: 0.9rem;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Toast */
+.toast {
+  position: fixed; top: 1rem; right: 1rem; z-index: 300;
+  padding: 0.8rem 1.2rem; border-radius: 8px; color: #fff;
+  font-size: 0.85rem; animation: slideIn 0.3s ease;
+  max-width: 400px;
+}
+.toast-success { background: var(--success); }
+.toast-error { background: var(--danger); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { width: 180px; }
+  .main { margin-left: 180px; padding: 1rem; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .tool-grid { grid-template-columns: 1fr; }
+}
+
+/* Help Panels */
+.help-panel {
+  border-radius: 10px; overflow: hidden; margin-bottom: 1rem;
+  border: 1px solid var(--rule);
+}
+.help-panel.help-info { background: rgba(6,182,212,0.06); border-color: rgba(6,182,212,0.25); }
+.help-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 1rem; cursor: pointer; user-select: none;
+  background: rgba(6,182,212,0.08); font-size: 0.85rem;
+}
+.help-header:hover { background: rgba(6,182,212,0.14); }
+.help-toggle { font-size: 0.7rem; color: var(--muted); }
+.help-body { padding: 0.8rem 1rem; font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
+.help-panel.collapsed .help-body { display: none; }
+.help-panel.collapsed .help-toggle::before { content: '展开 ▼'; }
+.help-panel:not(.collapsed) .help-toggle::before { content: '收起 ▲'; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <span class="icon">🔍</span> 取证平台
+  </div>
+  <div class="sidebar-nav">
+    <a href="#dashboard" class="active" data-page="dashboard">
+      <span class="nav-icon">📊</span> 仪表盘
+    </a>
+    <a href="#cases" data-page="cases">
+      <span class="nav-icon">📁</span> 案件管理
+    </a>
+    <a href="#tools" data-page="tools">
+      <span class="nav-icon">🔧</span> 取证工具
+    </a>
+    <a href="#tasks" data-page="tasks">
+      <span class="nav-icon">⚡</span> 任务监控
+    </a>
+    <a href="#reports" data-page="reports">
+      <span class="nav-icon">📄</span> 报告中心
+    </a>
+  </div>
+  <div class="sidebar-footer">
+    v1.0 · 16 工具集成
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+  <!-- Dashboard -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-header">
+      <h1>取证工作台</h1>
+      <p>系统运行状态概览</p>
+    </div>
+    <div class="stats-grid" id="dashboard-stats"></div>
+    <div class="card">
+      <h3>最近案件</h3>
+      <div class="table-wrap"><table id="recent-cases"><thead><tr><th>编号</th><th>名称</th><th>状态</th><th>创建时间</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Cases -->
+  <div id="page-cases" class="page">
+    <div class="page-header">
+      <h1>案件管理</h1>
+      <p>创建和管理取证案件</p>
+      <button class="btn btn-primary" onclick="openCaseModal()" style="margin-top:0.8rem">+ 新建案件</button>
+    </div>
+    <div class="table-wrap"><table id="cases-table"><thead><tr><th>ID</th><th>案件编号</th><th>名称</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- Tools -->
+  <div id="page-tools" class="page">
+    <div class="page-header">
+      <h1>🔧 取证工具</h1>
+      <p>共 16 个集成工具，覆盖 8 大取证领域。点击卡片查看详情，或直接访问官网下载。</p>
+    </div>
+    <div class="help-panel help-info" style="margin-bottom:1.2rem">
+      <div class="help-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span>💡 <strong>使用提示</strong></span><span class="help-toggle">收起 ▲</span>
+      </div>
+      <div class="help-body">
+        <ul style="margin:0;padding-left:1.2rem;line-height:1.8">
+          <li><strong>✅ 内置工具</strong>（标注绿色角标）已经集成纯 Python 实现，可以直接在当前系统中使用</li>
+          <li><strong>🔧 外部工具</strong>（标注黄色角标）需要先安装对应软件，系统会通过命令行调用</li>
+          <li>每个卡片底部有 <strong>官网链接</strong>，点击即可跳转到工具官方网站下载或查阅文档</li>
+          <li>点击卡片可展开详细信息，了解每个工具在电子取证中的实际用途</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tool-grid" id="tools-grid"></div>
+  </div>
+
+  <!-- Tasks -->
+  <div id="page-tasks" class="page">
+    <div class="page-header">
+      <h1>任务监控</h1>
+      <p>实时查看分析任务执行状态</p>
+    </div>
+    <div class="table-wrap"><table id="tasks-table"><thead><tr><th>ID</th><th>案件</th><th>工具</th><th>状态</th><th>进度</th><th>开始时间</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- Reports -->
+  <div id="page-reports" class="page">
+    <div class="page-header">
+      <h1>报告中心</h1>
+      <p>查看和下载取证分析报告</p>
+    </div>
+    <div class="table-wrap"><table id="reports-table"><thead><tr><th>ID</th><th>案件</th><th>标题</th><th>创建时间</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- Case Detail -->
+  <div id="page-case-detail" class="page">
+    <div class="page-header">
+      <button class="btn btn-outline" onclick="showPage('cases')">← 返回案件列表</button>
+      <h1 id="case-detail-title" style="margin-top:0.5rem">案件详情</h1>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="evidence">证据管理</div>
+      <div class="tab" data-tab="run-tool">运行工具</div>
+    </div>
+    <div id="tab-evidence">
+      <div class="help-panel help-info">
+        <div class="help-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span>💡 <strong>温馨提示：证据注册说明</strong></span><span class="help-toggle">收起 ▲</span>
+        </div>
+        <div class="help-body">
+          <p style="margin:0 0 0.5rem">本系统采用 <strong>路径引用</strong> 方式登记证据，不会复制或上传文件，仅在数据库中记录文件路径并计算哈希值用于完整性校验。</p>
+          <table style="width:100%;font-size:0.78rem;line-height:1.8">
+            <tr><td style="color:var(--accent);font-weight:700;width:100px">支持格式</td><td>dd / img / e01 / vmdk / raw / dmp / pcap / pcapng / exe / dll / elf / jpg / png / gif / pdf / docx / xlsx / zip / tar / 7z / log / txt / csv 等</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">文件大小</td><td>无限制。磁盘镜像和内存转储可达数百 GB，系统仅记录路径，不影响性能</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">路径要求</td><td>必须是本地磁盘的 <strong>绝对路径</strong>（如 D:\cases\image.dd），不支持网络路径</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">证据名称</td><td>建议格式：<strong>案件简称_证据类型_编号</strong>（如"入侵案_服务器镜像_001"），便于检索</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">哈希校验</td><td>系统自动计算 SHA-256 值，确保证据完整性，后续每次分析前可验证文件未被篡改</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">安全提醒</td><td>⚠️ 请确保证据文件路径正确且文件存在，否则后续分析任务将失败</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📎 注册证据</h3>
+        <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1rem;line-height:1.5">
+          <strong>证据注册</strong>是将本地文件路径登记到系统中，系统会自动计算 SHA-256 哈希值并记录审计日志。<br>
+          适用于大文件（镜像、PCAP、内存转储等），无需上传，直接引用本地路径即可。
+        </p>
+        <div class="form-group">
+          <label>证据名称 <span style="color:var(--muted);font-weight:400">— 给证据起一个可辨识的名称</span></label>
+          <input type="text" id="evidence-name" placeholder="例如：服务器磁盘镜像、嫌疑人PC内存转储">
+        </div>
+        <div class="form-group">
+          <label>文件路径 <span style="color:var(--muted);font-weight:400">— 证据文件在本地磁盘的完整路径</span></label>
+          <input type="text" id="evidence-path" placeholder="例如：D:\evidence\server.dd 或 C:\cases\memory.raw">
+        </div>
+        <div class="form-group">
+          <label>文件类型 <span style="color:var(--muted);font-weight:400">— 选择证据的文件类别</span></label>
+          <select id="evidence-type">
+            <option value="raw">原始数据 (raw)</option>
+            <option value="disk_image">磁盘镜像 (dd/img/e01/vmdk)</option>
+            <option value="memory_dump">内存转储 (raw/dmp)</option>
+            <option value="pcap">网络抓包 (pcap/pcapng)</option>
+            <option value="executable">可执行文件 (exe/dll/elf)</option>
+            <option value="image">图片文件 (jpg/png/gif)</option>
+            <option value="document">文档 (pdf/docx/xlsx)</option>
+            <option value="archive">压缩包 (zip/tar/7z)</option>
+            <option value="log">日志文件 (log/txt/csv)</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="uploadEvidence()">📎 注册证据</button>
+      </div>
+      <div class="table-wrap"><table id="evidence-table"><thead><tr><th>ID</th><th>名称</th><th>路径</th><th>大小</th><th>SHA256</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div id="tab-run-tool" style="display:none">
+      <div class="help-panel help-info">
+        <div class="help-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span>💡 <strong>温馨提示：工具选择与参数说明</strong></span><span class="help-toggle">收起 ▲</span>
+        </div>
+        <div class="help-body">
+          <p style="margin:0 0 0.5rem">从下拉列表中选择取证工具后，系统会自动展示该工具的详细信息和推荐参数。以下是各工具的参数作用说明：</p>
+          <table style="width:100%;font-size:0.78rem;line-height:1.8">
+            <tr><td style="color:var(--accent);font-weight:700;width:120px">工具选择</td><td>下拉列表标注了 ✅内置 或 🔧外部，选择后右侧自动显示工具详情和参数提示</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">证据关联</td><td>必须选择已在当前案件中注册的证据，系统会自动将证据路径传给工具</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">参数(JSON)</td><td>可选填写，用于指定工具的具体操作。留空则使用工具默认行为。格式为 JSON 键值对，如 {"action":"pcap_parse"}</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">常见参数</td><td>action（指定操作类型）、mode（破解模式）、keyword（过滤关键字）、wordlist（字典路径）等</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">执行方式</td><td>后台异步执行，提交后可前往"任务监控"页面查看进度和结果</td></tr>
+            <tr><td style="color:var(--accent);font-weight:700">结果获取</td><td>任务完成后，在任务列表中点击"查看结果"即可看到分析数据，点击"生成报告"可导出格式化报告</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>选择取证工具</h3>
+        <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1rem;line-height:1.5">
+          选择一个工具对当前案件的证据进行分析。内置工具（✅）无需外部依赖，可直接运行；<br>
+          外部工具（🔧）需要安装对应软件到本地路径。
+        </p>
+        <div class="form-group">
+          <label>工具</label>
+          <select id="run-tool-select" onchange="onToolSelect()"></select>
+        </div>
+        <div id="tool-info-panel" style="display:none;background:var(--bg3);border-radius:8px;padding:1rem;margin-bottom:1rem;border:1px solid var(--rule)">
+          <div id="tool-info-content"></div>
+        </div>
+        <div class="form-group">
+          <label>证据</label>
+          <select id="run-evidence-select"></select>
+        </div>
+        <div class="form-group">
+          <label>参数 <span style="color:var(--muted);font-weight:400">— 可选，JSON 格式</span></label>
+          <textarea id="run-tool-params" rows="3" placeholder='{"action": "pcap_parse"}'></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="runTool()">🚀 执行分析</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Case Modal -->
+<div class="modal-bg" id="case-modal">
+  <div class="modal">
+    <h2>新建案件</h2>
+    <div class="form-group">
+      <label>案件编号</label>
+      <input type="text" id="case-number" placeholder="CASE-2026-0001">
+    </div>
+    <div class="form-group">
+      <label>案件名称</label>
+      <input type="text" id="case-name" placeholder="例如：网络入侵调查">
+    </div>
+    <div class="form-group">
+      <label>案件描述</label>
+      <textarea id="case-desc" rows="3" placeholder="简要描述案件背景"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeCaseModal()">取消</button>
+      <button class="btn btn-primary" onclick="createCase()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result Modal -->
+<div class="modal-bg" id="result-modal">
+  <div class="modal" style="max-width:800px">
+    <h2>分析结果 — 任务 #<span id="result-task-id"></span></h2>
+    <div style="margin-bottom:0.8rem"><span class="badge badge-accent" id="result-tool-name"></span></div>
+    <div id="result-content" style="max-height:55vh;overflow-y:auto;font-family:'Consolas','Courier New',monospace;font-size:0.8rem;background:var(--bg);border-radius:6px;padding:1rem;white-space:pre-wrap;word-break:break-all;line-height:1.5"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeResultModal()">关闭</button>
+      <button class="btn btn-primary" id="btn-generate-report" onclick="generateReportFromResult()">生成报告</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// ========== API ==========
+const API = '/api/v1';
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || data.detail || '请求失败');
+  return data;
+}
+
+// ========== Toast ==========
+function toast(msg, type) {
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ========== Navigation ==========
+let currentCaseId = null;
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+  const nav = document.querySelector(`[data-page="${page}"]`);
+  if (nav) nav.classList.add('active');
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'cases') loadCases();
+  if (page === 'tools') loadTools();
+  if (page === 'tasks') loadTasks();
+  if (page === 'reports') loadReports();
+}
+
+document.querySelectorAll('.sidebar-nav a').forEach(a => {
+  a.addEventListener('click', e => { e.preventDefault(); showPage(a.dataset.page); });
+});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-evidence').style.display = t.dataset.tab === 'evidence' ? 'block' : 'none';
+    document.getElementById('tab-run-tool').style.display = t.dataset.tab === 'run-tool' ? 'block' : 'none';
+  });
+});
+
+// ========== Dashboard ==========
+async function loadDashboard() {
+  try {
+    const [cases, tools, tasks, reports] = await Promise.all([
+      api('GET', '/cases?limit=5').catch(() => ({ items: [], total: 0 })),
+      api('GET', '/tools').catch(() => ({ tools: {}, total: 0 })),
+      api('GET', '/tasks?limit=5').catch(() => ({ items: [], total: 0 })),
+      api('GET', '/reports?limit=5').catch(() => ({ items: [], total: 0 })),
+    ]);
+    document.getElementById('dashboard-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-num">${cases.total||0}</div><div class="stat-label">案件总数</div></div>
+      <div class="stat-card"><div class="stat-num">${tools.total||0}</div><div class="stat-label">集成工具</div></div>
+      <div class="stat-card"><div class="stat-num">${tasks.total||0}</div><div class="stat-label">分析任务</div></div>
+      <div class="stat-card"><div class="stat-num">${reports.total||0}</div><div class="stat-label">取证报告</div></div>
+    `;
+    const tbody = document.querySelector('#recent-cases tbody');
+    tbody.innerHTML = (cases.items||[]).slice(0,5).map(c => `
+      <tr>
+        <td>${c.case_number}</td>
+        <td><a href="#" onclick="openCaseDetail(${c.id})" style="color:var(--accent)">${c.name}</a></td>
+        <td><span class="badge badge-${c.status==='open'?'green':c.status==='analyzing'?'warn':'purple'}">${c.status}</span></td>
+        <td>${c.created_at}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="4" style="color:var(--muted)">暂无案件</td></tr>';
+  } catch(e) { console.error(e); }
+}
+
+// ========== Cases ==========
+async function loadCases() {
+  try {
+    const data = await api('GET', '/cases?limit=50');
+    const tbody = document.querySelector('#cases-table tbody');
+    tbody.innerHTML = (data.items||[]).map(c => `
+      <tr>
+        <td>${c.id}</td><td>${c.case_number}</td>
+        <td><a href="#" onclick="openCaseDetail(${c.id})" style="color:var(--accent);font-weight:600">${c.name}</a></td>
+        <td><span class="badge badge-${c.status==='open'?'green':c.status==='analyzing'?'warn':'purple'}">${c.status}</span></td>
+        <td>${c.created_at}</td>
+        <td>
+          <button class="btn btn-outline btn-sm" onclick="openCaseDetail(${c.id})">详情</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCase(${c.id})">删除</button>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="6" style="color:var(--muted)">暂无案件，请点击上方按钮创建</td></tr>';
+  } catch(e) { toast('加载案件失败: ' + e.message, 'error'); }
+}
+
+function openCaseModal() { document.getElementById('case-modal').classList.add('show'); }
+function closeCaseModal() { document.getElementById('case-modal').classList.remove('show'); }
+
+async function createCase() {
+  const body = {
+    case_number: document.getElementById('case-number').value,
+    name: document.getElementById('case-name').value,
+    description: document.getElementById('case-desc').value,
+  };
+  if (!body.case_number || !body.name) { toast('请填写案件编号和名称', 'error'); return; }
+  try {
+    await api('POST', '/cases', body);
+    closeCaseModal();
+    toast('案件创建成功', 'success');
+    loadCases();
+  } catch(e) { toast('创建失败: ' + e.message, 'error'); }
+}
+
+async function deleteCase(id) {
+  if (!confirm('确定删除此案件？')) return;
+  try { await api('DELETE', '/cases/' + id); toast('已删除', 'success'); loadCases(); }
+  catch(e) { toast('删除失败: ' + e.message, 'error'); }
+}
+
+// ========== Case Detail ==========
+async function openCaseDetail(id) {
+  currentCaseId = id;
+  showPage('case-detail');
+  try {
+    const c = await api('GET', '/cases/' + id);
+    document.getElementById('case-detail-title').textContent = '#' + c.id + ' ' + c.name;
+    await loadEvidences();
+    await loadToolsForSelect();
+  } catch(e) { toast('加载案件详情失败', 'error'); }
+}
+
+async function loadEvidences() {
+  try {
+    const data = await api('GET', '/evidences?case_id=' + currentCaseId);
+    const tbody = document.querySelector('#evidence-table tbody');
+    tbody.innerHTML = (data.items||[]).map(e => `
+      <tr>
+        <td>${e.id}</td><td>${e.name}</td><td style="font-size:0.8rem;color:var(--muted)">${e.file_path}</td>
+        <td>${(e.file_size||0)}</td>
+        <td style="font-size:0.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.sha256_hash||''}">${e.sha256_hash||'-'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteEvidence(${e.id})">删除</button></td>
+      </tr>
+    `).join('') || '<tr><td colspan="6" style="color:var(--muted)">暂无证据</td></tr>';
+    // Update select
+    const sel = document.getElementById('run-evidence-select');
+    sel.innerHTML = '<option value="">-- 选择证据 --</option>' + (data.items||[]).map(e => `<option value="${e.id}">${e.name} (${e.file_path})</option>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function uploadEvidence() {
+  const name = document.getElementById('evidence-name').value;
+  const path = document.getElementById('evidence-path').value;
+  const type = document.getElementById('evidence-type').value;
+  if (!name || !path) { toast('请填写证据名称和路径', 'error'); return; }
+  try {
+    await api('POST', '/evidences', { case_id: currentCaseId, name, file_path: path, file_type: type });
+    toast('证据注册成功', 'success');
+    document.getElementById('evidence-name').value = '';
+    document.getElementById('evidence-path').value = '';
+    loadEvidences();
+  } catch(e) { toast('注册失败: ' + e.message, 'error'); }
+}
+
+async function deleteEvidence(id) {
+  if (!confirm('确定删除此证据？删除后不可恢复。')) return;
+  try { await api('DELETE', '/evidences/' + id); toast('证据已删除', 'success'); loadEvidences(); }
+  catch(e) { toast('删除失败: ' + e.message, 'error'); }
+}
+
+let toolsData = {};
+async function loadToolsForSelect() {
+  try {
+    const data = await api('GET', '/tools');
+    toolsData = data.tools || {};
+    const sel = document.getElementById('run-tool-select');
+    sel.innerHTML = '<option value="">-- 选择工具 --</option>' + Object.entries(toolsData).map(([k,v]) => {
+      const builtin = v.version&&v.version.includes('pure') ? ' ✅内置' : ' 🔧';
+      return `<option value="${k}">${builtin} ${v.tool_name} - ${v.description}</option>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+function onToolSelect() {
+  const toolName = document.getElementById('run-tool-select').value;
+  const panel = document.getElementById('tool-info-panel');
+  const content = document.getElementById('tool-info-content');
+  if (!toolName || !toolsData[toolName]) { panel.style.display = 'none'; return; }
+  const v = toolsData[toolName];
+  const isBuiltin = v.version && v.version.includes('pure');
+  const hints = TOOL_PARAM_HINTS[toolName] || [];
+  content.innerHTML = `
+    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem">
+      <span style="font-weight:700;font-size:1rem;color:var(--accent)">${v.tool_name}</span>
+      <span class="badge ${isBuiltin?'badge-green':'badge-warn'}">${isBuiltin?'内置工具，无需外部依赖':'需要外部工具'}</span>
+      <span style="font-size:0.75rem;color:var(--muted)">v${v.version}</span>
+    </div>
+    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:0.6rem">${v.description}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.8rem">
+      ${(v.capabilities||[]).map(c => `<span class="badge badge-accent">${c}</span>`).join('')}
+    </div>
+    ${hints.length ? '<div style="font-size:0.8rem;color:var(--warn);margin-top:0.5rem"><strong>💡 参数提示：</strong></div>' + hints.map(h => `<div style="font-size:0.78rem;color:var(--muted);padding:2px 0">${h}</div>`).join('') : ''}
+  `;
+  panel.style.display = 'block';
+  // 自动填充参数模板
+  if (hints.length > 0) {
+    document.getElementById('run-tool-params').placeholder = hints[0].replace('参数：', '示例：');
+  }
+}
+
+const TOOL_PARAM_HINTS = {
+  exiftool: ['参数：无需填写，系统自动使用证据路径提取元数据'],
+  wireshark: ['参数：{"action":"pcap_parse"} — 解析PCAP文件', '参数：{"action":"protocol_stats"} — 协议统计'],
+  fiddler: ['参数：{"action":"session_list"} — 列出HTTP会话', '参数：{"action":"timeline"} — 请求时间线'],
+  volatility: ['参数：{"action":"pslist"} — 进程列表', '参数：{"action":"netscan"} — 网络连接扫描'],
+  hashcat: ['参数：{"action":"detect"} — 检测哈希类型', '参数：{"mode":0} — 指定破解模式'],
+  john: ['参数：{"action":"single"} — Single模式', '参数：{"action":"wordlist","wordlist":"rockyou.txt"} — 字典模式'],
+  testdisk: ['参数：{"action":"analyze"} — 分析分区表', '参数：{"action":"recover"} — 恢复分区'],
+  windbg: ['参数：{"action":"analyze"} — 分析崩溃转储', '参数：{"action":"stack"} — 调用栈分析'],
+  process_explorer: ['参数：{"action":"process_tree"} — 进程树', '参数：{"action":"dll_list"} — 已加载DLL'],
+  process_monitor: ['参数：{"action":"registry"} — 注册表监控', '参数：{"action":"file_io"} — 文件IO监控'],
+  debugview: ['参数：{"action":"capture"} — 捕获调试输出', '参数：{"action":"filter","keyword":"error"} — 过滤关键字'],
+  '010editor': ['参数：{"action":"hex_view"} — 十六进制查看', '参数：{"action":"template_parse"} — 模板解析'],
+  ibackupbot: ['参数：{"action":"list_backups"} — 列出备份', '参数：{"action":"extract_sms"} — 提取短信'],
+  beyond_compare: ['参数：{"action":"compare","file2":"D:\\path\\b.txt"} — 对比两个文件'],
+  ftk_imager: ['参数：{"action":"verify"} — 验证镜像完整性', '参数：{"action":"mount"} — 挂载镜像'],
+  networkminer: ['参数：{"action":"extract_files"} — 提取文件', '参数：{"action":"hosts"} — 主机列表'],
+};
+
+async function runTool() {
+  const toolName = document.getElementById('run-tool-select').value;
+  const evidenceId = document.getElementById('run-evidence-select').value;
+  let params = {};
+  try { params = JSON.parse(document.getElementById('run-tool-params').value || '{}'); } catch(e) { toast('参数格式错误，请输入有效JSON', 'error'); return; }
+  if (!toolName || !evidenceId) { toast('请选择工具和证据', 'error'); return; }
+  try {
+    await api('POST', '/tasks', { case_id: currentCaseId, evidence_id: parseInt(evidenceId), tool_name: toolName, params });
+    toast('任务已提交', 'success');
+    showPage('tasks');
+  } catch(e) { toast('任务提交失败: ' + e.message, 'error'); }
+}
+
+// ========== Tools ==========
+const TOOL_OFFICIAL_SITES = {
+  exiftool:      { url: 'https://exiftool.org',                        name: 'ExifTool 官网',          category: '元数据与文件分析' },
+  wireshark:     { url: 'https://www.wireshark.org',                   name: 'Wireshark 官网',         category: '网络流量分析' },
+  fiddler:       { url: 'https://www.telerik.com/fiddler',            name: 'Fiddler 官网',           category: '网络流量分析' },
+  volatility:    { url: 'https://github.com/volatilityfoundation/volatility3', name: 'Volatility 官网', category: '内存取证' },
+  ftk_imager:    { url: 'https://www.exterro.com/ftk-imager',          name: 'FTK Imager 官网',        category: '磁盘与镜像取证' },
+  networkminer:  { url: 'https://www.netresec.com/?page=NetworkMiner', name: 'NetworkMiner 官网',       category: '网络流量分析' },
+  hashcat:       { url: 'https://hashcat.net',                         name: 'Hashcat 官网',           category: '密码破解' },
+  john:          { url: 'https://www.openwall.com/john/',              name: 'John the Ripper 官网',   category: '密码破解' },
+  testdisk:      { url: 'https://www.cgsecurity.org/wiki/TestDisk',    name: 'TestDisk 官网',          category: '磁盘与镜像取证' },
+  windbg:        { url: 'https://learn.microsoft.com/zh-cn/windows-hardware/drivers/debugger/', name: 'WinDbg 官方文档', category: '崩溃与调试分析' },
+  process_explorer: { url: 'https://learn.microsoft.com/zh-cn/sysinternals/downloads/process-explorer', name: 'Process Explorer 官网', category: '进程监控' },
+  process_monitor:  { url: 'https://learn.microsoft.com/zh-cn/sysinternals/downloads/procmon', name: 'Process Monitor 官网', category: '进程监控' },
+  debugview:     { url: 'https://learn.microsoft.com/zh-cn/sysinternals/downloads/debugview', name: 'DebugView 官网', category: '崩溃与调试分析' },
+  '010editor':   { url: 'https://www.sweetscape.com/010editor/',       name: '010 Editor 官网',        category: '二进制分析' },
+  ibackupbot:    { url: 'https://www.imactools.com/ibackupbot/',       name: 'iBackupBot 官网',        category: '移动设备取证' },
+  beyond_compare:{ url: 'https://www.scootersoftware.com',             name: 'Beyond Compare 官网',    category: '文件对比' },
+};
+
+const TOOL_DETAILS = {
+  exiftool: 'ExifTool 是数字取证中最常用的元数据提取工具，支持读取和编辑图片、音频、视频、PDF 等文件的 Exif/IPTC/XMP 元信息。在取证场景中用于确认文件来源、拍摄时间、GPS 坐标等关键证据。',
+  wireshark: 'Wireshark 是全球最流行的开源网络协议分析器，可实时捕获或离线分析 PCAP 流量。取证用途包括：识别恶意通信、分析数据泄露路径、还原 HTTP/FTP 传输文件。',
+  fiddler: 'Fiddler 是 Telerik 出品的 Web 调试代理工具，能捕获 HTTP/HTTPS 流量。取证场景：分析浏览器活动、追踪 Web 请求时间线、还原网页访问记录。',
+  volatility: 'Volatility 是业界标准的内存取证框架，支持从内存转储中提取进程列表、网络连接、注册表键值、恶意代码等。适用于 Windows/Linux/macOS 全平台。',
+  ftk_imager: 'FTK Imager 是 AccessData(现 Exterro) 出品的磁盘镜像工具，支持创建 dd/e01 格式的取证镜像、挂载镜像只读分析、验证镜像哈希完整性。',
+  networkminer: 'NetworkMiner 是 NETRESEC 开发的网络取证分析工具(NFAT)，可被动嗅探网络流量，自动提取传输的文件、证书、主机列表。适合离线 PCAP 分析。',
+  hashcat: 'hashcat 自称"世界上最快的密码破解工具"，支持 GPU 加速、200+ 哈希算法。取证中用于破解加密文件密码、恢复用户凭据。',
+  john: 'John the Ripper 是 Openwall 开发的经典密码破解器，支持字典攻击、暴力破解、规则模式。取证中常用于破解系统密码哈希、压缩包密码。',
+  testdisk: 'TestDisk 是 CGSecurity 出品的免费分区恢复工具，可修复分区表、恢复误删分区、重建引导扇区。取证中用于恢复被故意破坏的磁盘结构。',
+  windbg: 'WinDbg 是微软开发的 Windows 内核/用户态调试器，可分析崩溃转储(BSOD dump)、恶意软件行为。取证中用于从 crash dump 中提取内存快照信息。',
+  process_explorer: 'Process Explorer 是 Sysinternals 套件中的高级任务管理器，可查看进程树、DLL 加载、句柄占用。取证中用于发现隐藏进程和恶意注入。',
+  process_monitor: 'Process Monitor 是 Sysinternals 套件中的实时监控工具，记录文件系统、注册表、进程/线程活动。取证中用于还原操作时间线和行为链。',
+  debugview: 'DebugView 是 Sysinternals 套件中的调试输出捕获工具，可拦截 Win32 程序的 OutputDebugString 输出。取证中用于获取恶意软件调试信息。',
+  '010editor': '010 Editor 是 SweetScape 出品的专业十六进制编辑器，支持二进制模板(Binary Templates)技术。取证中用于解析未知文件格式、分析文件结构。',
+  ibackupbot: 'iBackupBot 是 iMacTools 出品的 iOS 备份管理工具，可读取 iTunes 备份中的短信、通话记录、照片、应用数据。移动设备取证利器。',
+  beyond_compare: 'Beyond Compare 是 Scooter Software 出品的专业文件/文件夹对比工具。取证中用于比对文件差异、验证证据文件版本、发现被修改的内容。',
+};
+
+async function loadTools() {
+  try {
+    const data = await api('GET', '/tools');
+    const grid = document.getElementById('tools-grid');
+    grid.innerHTML = Object.entries(data.tools||{}).map(([k,v]) => {
+      const isBuiltin = v.version && v.version.includes('pure');
+      const site = TOOL_OFFICIAL_SITES[k] || {};
+      const detail = TOOL_DETAILS[k] || v.description;
+      return `
+      <div class="tool-card ${isBuiltin?'builtin':'external'}" onclick="this.classList.toggle('expanded')">
+        <span class="tool-badge ${isBuiltin?'builtin':'external'}">${isBuiltin?'✅ 内置':'🔧 外部'}</span>
+        <div class="tool-name">${v.tool_name}</div>
+        <div class="tool-desc">${v.description}</div>
+        <div class="tool-caps">${(v.capabilities||[]).map(c => `<span class="badge badge-accent">${c}</span>`).join('')}</div>
+        <div class="tool-detail"><p>${detail}</p></div>
+        <div class="tool-links">
+          ${site.url ? `<a href="${site.url}" target="_blank" onclick="event.stopPropagation()" title="访问官方网站">🌐 ${site.name||'官网'}</a>` : ''}
+          <a href="javascript:void(0)" onclick="event.stopPropagation();showPage('cases');setTimeout(()=>openCaseAndRunTool('${k}'),300)" style="border-color:var(--success);color:var(--success)">⚡ 立即使用</a>
+        </div>
+        <div class="tool-version">v${v.version} | ${site.category||'通用'}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { toast('加载工具列表失败', 'error'); }
+}
+
+// Helper: select a case then switch to tool tab
+async function openCaseAndRunTool(toolName) {
+  // Load cases first
+  const data = await api('GET', '/cases?limit=50');
+  const items = data.items || [];
+  if (items.length === 0) { toast('请先创建案件', 'error'); return; }
+  // Open the first case
+  const c = items[0];
+  await openCaseDetail(c.id);
+  // Switch to run-tool tab
+  document.querySelectorAll('#case-detail .tab').forEach(t => t.classList.remove('active'));
+  const runTab = document.querySelector('#case-detail .tab[data-tab="run-tool"]');
+  if (runTab) runTab.classList.add('active');
+  document.getElementById('tab-evidence').style.display = 'none';
+  document.getElementById('tab-run-tool').style.display = 'block';
+  // Select the tool
+  document.getElementById('run-tool-select').value = toolName;
+  onToolSelect();
+}
+
+// ========== Tasks ==========
+let tasksTimer = null;
+async function loadTasks() {
+  try {
+    const data = await api('GET', '/tasks?limit=50');
+    const tbody = document.querySelector('#tasks-table tbody');
+    tbody.innerHTML = (data.items||[]).map(t => `
+      <tr>
+        <td>${t.id}</td><td>#${t.case_id}</td><td><span class="badge badge-accent">${t.tool_name}</span></td>
+        <td><span class="badge badge-${t.status==='completed'?'green':t.status==='failed'?'red':t.status==='running'?'warn':'purple'}">${t.status}</span></td>
+        <td style="min-width:100px">
+          ${t.status==='running' ? '<div style="background:var(--rule);border-radius:4px;height:6px;overflow:hidden"><div style="background:var(--accent);height:100%;width:'+(t.progress||0)+'%;transition:width 0.5s"></div></div><span style="font-size:0.72rem;color:var(--muted)">'+(t.progress||0)+'%</span>' : (t.status==='completed' ? '<span style="color:var(--success);font-size:0.8rem">100%</span>' : (t.status==='failed' ? '<span style="color:var(--danger);font-size:0.8rem">失败</span>' : '<span style="color:var(--muted);font-size:0.8rem">等待中</span>'))}
+        </td>
+        <td>${t.start_time ? new Date(t.start_time).toLocaleTimeString('zh-CN') : '-'}</td>
+        <td style="white-space:nowrap">${(t.status==='pending'||t.status==='running') ? '<button class="btn btn-danger btn-sm" onclick="cancelTask('+t.id+')">取消</button>' : (t.status==='completed' ? '<button class="btn btn-outline btn-sm" onclick="viewTaskResult('+t.id+')">查看结果</button> <button class="btn btn-primary btn-sm" onclick="generateReport('+t.id+')">生成报告</button>' : (t.status==='failed' ? '<button class="btn btn-outline btn-sm" onclick="viewTaskError('+t.id+')">查看错误</button>' : ''))}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="7" style="color:var(--muted)">暂无任务</td></tr>';
+
+    // 有运行中或等待中的任务时自动刷新
+    const hasActive = (data.items||[]).some(t => t.status==='running' || t.status==='pending');
+    if (hasActive) {
+      if (!tasksTimer) tasksTimer = setInterval(loadTasks, 2000);
+    } else {
+      if (tasksTimer) { clearInterval(tasksTimer); tasksTimer = null; }
+    }
+  } catch(e) { toast('加载任务失败', 'error'); }
+}
+
+async function cancelTask(id) {
+  if (!confirm('确定取消此任务？')) return;
+  try { await api('POST', '/tasks/' + id + '/cancel'); toast('任务已取消', 'success'); loadTasks(); }
+  catch(e) { toast('取消失败: ' + e.message, 'error'); }
+}
+
+// ========== Reports ==========
+async function loadReports() {
+  try {
+    const data = await api('GET', '/reports?limit=50');
+    const tbody = document.querySelector('#reports-table tbody');
+    tbody.innerHTML = (data.items||[]).map(r => `
+      <tr>
+        <td>${r.id}</td><td>#${r.case_id}</td><td>${r.title}</td>
+        <td>${r.created_at}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="viewReport(${r.id})">查看</button></td>
+      </tr>
+    `).join('') || '<tr><td colspan="5" style="color:var(--muted)">暂无报告</td></tr>';
+  } catch(e) { toast('加载报告失败', 'error'); }
+}
+
+function viewReport(id) {
+  window.open('/api/v1/reports/' + id + '/view', '_blank');
+}
+
+// ========== Task Results ==========
+let currentResultTaskId = null;
+
+async function viewTaskResult(taskId) {
+  try {
+    const t = await api('GET', '/tasks/' + taskId);
+    document.getElementById('result-task-id').textContent = t.id;
+    document.getElementById('result-tool-name').textContent = t.tool_name;
+    let resultText = '';
+    if (t.result_path) {
+      try {
+        // Try to parse as JSON for pretty display
+        const parsed = JSON.parse(t.result_path);
+        resultText = JSON.stringify(parsed, null, 2);
+      } catch {
+        // Try to parse Python dict-style string
+        try {
+          const cleaned = t.result_path.replace(/'/g, '"').replace(/True/g, 'true').replace(/False/g, 'false').replace(/None/g, 'null');
+          const parsed = JSON.parse(cleaned);
+          resultText = JSON.stringify(parsed, null, 2);
+        } catch {
+          resultText = t.result_path;
+        }
+      }
+    } else {
+      resultText = '(无结果数据)';
+    }
+    document.getElementById('result-content').textContent = resultText;
+    currentResultTaskId = taskId;
+    document.getElementById('result-modal').classList.add('show');
+  } catch(e) { toast('查看结果失败: ' + e.message, 'error'); }
+}
+
+async function viewTaskError(taskId) {
+  try {
+    const t = await api('GET', '/tasks/' + taskId);
+    document.getElementById('result-task-id').textContent = t.id;
+    document.getElementById('result-tool-name').textContent = t.tool_name;
+    document.getElementById('result-content').textContent = '错误信息:\n' + (t.error_message || '(无)');
+    currentResultTaskId = null;
+    document.getElementById('result-modal').classList.add('show');
+    document.getElementById('btn-generate-report').style.display = 'none';
+  } catch(e) { toast('查看失败: ' + e.message, 'error'); }
+}
+
+function closeResultModal() {
+  document.getElementById('result-modal').classList.remove('show');
+  document.getElementById('btn-generate-report').style.display = '';
+  currentResultTaskId = null;
+}
+
+async function generateReport(taskId) {
+  try {
+    const t = await api('GET', '/tasks/' + taskId);
+    let content = {};
+    if (t.result_path) {
+      try { content = JSON.parse(t.result_path); } catch {
+        try { content = JSON.parse(t.result_path.replace(/'/g, '"').replace(/True/g, 'true').replace(/False/g, 'false').replace(/None/g, 'null')); } catch {}
+      }
+    }
+    const report = await api('POST', '/reports', {
+      case_id: t.case_id,
+      title: t.tool_name + ' 分析报告 — 任务 #' + taskId,
+      content: { tool_name: t.tool_name, task_id: taskId, result: content, generated_at: new Date().toISOString() }
+    });
+    toast('报告已生成', 'success');
+    // Auto-generate HTML
+    try { await api('POST', '/reports/' + report.id + '/generate-html'); } catch {}
+    loadReports();
+    showPage('reports');
+  } catch(e) { toast('生成报告失败: ' + e.message, 'error'); }
+}
+
+async function generateReportFromResult() {
+  if (!currentResultTaskId) return;
+  await generateReport(currentResultTaskId);
+  closeResultModal();
+}
+
+// ========== Init ==========
+loadDashboard();
+</script>
+
+</body>
+</html>
