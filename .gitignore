@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual env
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+
+# Storage
+storage/evidences/*
+storage/reports/*
+storage/temp/*
+!storage/evidences/.gitkeep
+!storage/reports/.gitkeep
+!storage/temp/.gitkeep
+
+# Frontend (React source, not used)
+frontend/
+node_modules/
+
+# Docker
+docker-compose.yml
+tools/docker-compose.tools.yml
+
+# Error log
+error.log
