@@ -1,7 +1,4 @@
-﻿"""010 Editor 纯 Python 十六进制查看适配器。
-
-零外部依赖，基于 Python 标准库实现文件的十六进制查看、文件统计与魔数分析。
-"""
+﻿# 010 Editor 纯 Python 十六进制查看适配器，零外部依赖。
 
 from __future__ import annotations
 
@@ -13,10 +10,7 @@ from datetime import datetime, timezone
 
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
-# ---------------------------------------------------------------------------
-# 魔数签名数据库 —— 常见文件类型头字节签名
-# 格式: (偏移量, 十六进制字节序列, 描述)
-# ---------------------------------------------------------------------------
+# 常见文件类型头字节签名: (偏移量, 十六进制字节序列, 描述)
 _MAGIC_SIGNATURES: list[tuple[int, bytes, str]] = [
     # 图片
     (0, b"\xFF\xD8\xFF", "JPEG image"),
@@ -74,15 +68,8 @@ _MAGIC_SIGNATURES: list[tuple[int, bytes, str]] = [
 ]
 
 
+# 根据文件头字节识别文件类型。
 def _identify_magic(file_bytes: bytes) -> list[dict]:
-    """根据文件头字节识别文件类型。
-
-    Args:
-        file_bytes: 文件头部字节数据（至少 64 字节）
-
-    Returns:
-        匹配到的魔数信息列表，每项包含 offset、hex、description
-    """
     matches: list[dict] = []
     for offset, signature, description in _MAGIC_SIGNATURES:
         end = offset + len(signature)
@@ -96,15 +83,7 @@ def _identify_magic(file_bytes: bytes) -> list[dict]:
 
 
 def _format_hex_line(offset: int, chunk: bytes) -> dict:
-    """格式化单行十六进制输出。
-
-    Args:
-        offset: 当前偏移量
-        chunk: 16 字节（或更少）的二进制数据
-
-    Returns:
-        包含 offset、hex、ascii 的字典
-    """
+    """格式化单行十六进制输出。"""
     hex_str = " ".join(f"{b:02X}" for b in chunk)
     ascii_str = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
     return {
@@ -115,14 +94,7 @@ def _format_hex_line(offset: int, chunk: bytes) -> dict:
 
 
 def _compute_hashes(file_path: str) -> dict[str, str]:
-    """计算文件的 MD5、SHA1、SHA256 哈希值。
-
-    Args:
-        file_path: 文件路径
-
-    Returns:
-        包含 md5、sha1、sha256 的字典
-    """
+    """计算文件的 MD5、SHA1、SHA256 哈希值。"""
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
@@ -141,18 +113,10 @@ def _compute_hashes(file_path: str) -> dict[str, str]:
     }
 
 
+# 纯 Python 十六进制查看器，支持 hex_view / file_stats / magic_analysis。
 class TenEditorAdapter(BaseToolAdapter):
-    """010 Editor 纯 Python 十六进制查看适配器。
 
-    支持的命令:
-        - hex_view: 分块十六进制 + ASCII 预览
-        - file_stats: 文件统计信息（大小、时间、哈希、魔数）
-        - magic_analysis: 魔数识别文件类型
-    """
-
-    # ------------------------------------------------------------------
     # 元属性
-    # ------------------------------------------------------------------
 
     @property
     def tool_name(self) -> str:
@@ -170,15 +134,8 @@ class TenEditorAdapter(BaseToolAdapter):
     def capabilities(self) -> list[str]:
         return ["hex_view", "file_stats", "magic_analysis"]
 
-    # ------------------------------------------------------------------
-    # 输入验证
-    # ------------------------------------------------------------------
-
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        支持 "file_path" 或 "file" 作为文件路径字段名。
-        """
+        """验证 command 和 file_path/file 参数。"""
         command = params.get("command", "hex_view")
         file_path = params.get("file_path") or params.get("file")
         if not file_path:
@@ -187,24 +144,12 @@ class TenEditorAdapter(BaseToolAdapter):
             return False
         return True
 
-    # ------------------------------------------------------------------
-    # 核心逻辑
-    # ------------------------------------------------------------------
-
     def _resolve_path(self, params: dict) -> str:
         """从 params 中解析文件路径，优先使用 file_path。"""
         return params.get("file_path") or params.get("file", "")
 
     def _do_hex_view(self, file_path: str, params: dict) -> dict:
-        """分块显示十六进制 + ASCII 预览。
-
-        Args:
-            file_path: 目标文件路径
-            params: 包含 offset 和 max_bytes 的参数字典
-
-        Returns:
-            hex_view 结果字典
-        """
+        """分块显示十六进制 + ASCII 预览。"""
         file_size = os.path.getsize(file_path)
         offset = int(params.get("offset", 0))
         max_bytes = int(params.get("max_bytes", min(4096, file_size - offset)))
@@ -233,15 +178,7 @@ class TenEditorAdapter(BaseToolAdapter):
         }
 
     def _do_file_stats(self, file_path: str, params: dict) -> dict:
-        """输出文件大小、修改时间、哈希、魔数。
-
-        Args:
-            file_path: 目标文件路径
-            params: 参数字典
-
-        Returns:
-            file_stats 结果字典
-        """
+        """输出文件大小、修改时间、哈希、魔数。"""
         stat = os.stat(file_path)
         mtime_dt = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
 
@@ -264,16 +201,8 @@ class TenEditorAdapter(BaseToolAdapter):
             "magic_matches": magic_matches,
         }
 
+    # 根据文件头魔数识别文件类型。
     def _do_magic_analysis(self, file_path: str, params: dict) -> dict:
-        """根据文件头魔数识别文件类型。
-
-        Args:
-            file_path: 目标文件路径
-            params: 参数字典
-
-        Returns:
-            magic_analysis 结果字典
-        """
         with open(file_path, "rb") as f:
             header = f.read(64)
 
@@ -288,19 +217,8 @@ class TenEditorAdapter(BaseToolAdapter):
             "all_matches": matches,
         }
 
-    # ------------------------------------------------------------------
-    # 异步入口
-    # ------------------------------------------------------------------
-
     async def run(self, params: dict) -> ToolResult:
-        """异步执行工具。
-
-        Args:
-            params: 工具参数字典，必须包含 command 和 file_path/file
-
-        Returns:
-            ToolResult 执行结果
-        """
+        """异步执行。command: hex_view/file_stats/magic_analysis，需 file_path/file。"""
         if not self.validate_input(params):
             return ToolResult(
                 success=False,

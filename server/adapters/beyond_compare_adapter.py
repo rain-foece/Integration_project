@@ -1,8 +1,4 @@
-﻿"""Beyond Compare 适配器（纯 Python 实现）。
-
-使用 difflib 标准库实现文件对比功能，不依赖外部 exe。
-支持文本文件差异对比、统一 diff 输出和相似度计算。
-"""
+﻿# Beyond Compare 适配器（纯 Python 实现），基于 difflib 进行文件对比。
 
 import difflib
 import os
@@ -11,13 +7,8 @@ import time
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
 
+# 文件对比适配器，基于 difflib，支持 compare（统计差异+相似度）和 unified_diff（统一 diff 输出）。
 class BeyondCompareAdapter(BaseToolAdapter):
-    """Beyond Compare 文件对比适配器（纯 Python 实现）。
-
-    使用 difflib 进行文件对比，支持:
-        - action="compare": 对比两个文本文件，输出差异行数、统一 diff、相似度百分比（默认）
-        - action="unified_diff": 仅输出统一 diff 格式的差异
-    """
 
     @property
     def tool_name(self) -> str:
@@ -39,17 +30,11 @@ class BeyondCompareAdapter(BaseToolAdapter):
         return ["file_comparison", "unified_diff", "similarity_analysis"]
 
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        需要 file1 和 file2 两个参数。
-        """
+        """需要 file1 和 file2 两个参数。"""
         return "file1" in params and "file2" in params
 
     def _read_file_lines(self, file_path: str) -> list[str]:
-        """读取文件内容，按行返回。
-
-        尝试多种编码方式读取文本文件。
-        """
+        """按行读取文件内容（尝试多种编码）。"""
         for encoding in ("utf-8", "gbk", "latin-1"):
             try:
                 with open(file_path, "r", encoding=encoding) as f:
@@ -61,10 +46,7 @@ class BeyondCompareAdapter(BaseToolAdapter):
             return f.readlines()
 
     def _compute_similarity(self, lines1: list[str], lines2: list[str]) -> float:
-        """计算两个文件的相似度百分比。
-
-        使用 difflib.SequenceMatcher 计算序列相似度。
-        """
+        """计算两个文件的相似度百分比。"""
         if not lines1 and not lines2:
             return 100.0
         if not lines1 or not lines2:
@@ -74,11 +56,7 @@ class BeyondCompareAdapter(BaseToolAdapter):
         return round(matcher.ratio() * 100, 2)
 
     def _compute_diff_count(self, lines1: list[str], lines2: list[str]) -> dict:
-        """统计差异行数。
-
-        Returns:
-            包含 added_count, removed_count, total_diff_count 的字典。
-        """
+        """统计差异行数（added/removed/total）。"""
         differ = difflib.Differ()
         diff_result = list(differ.compare(lines1, lines2))
 
@@ -109,18 +87,7 @@ class BeyondCompareAdapter(BaseToolAdapter):
         return "\n".join(diff_lines)
 
     async def run(self, params: dict) -> ToolResult:
-        """执行文件对比。
-
-        Args:
-            params: 参数字典，必须包含:
-                - file1: 第一个文件路径
-                - file2: 第二个文件路径
-                可选:
-                - action: "compare"（默认）或 "unified_diff"
-
-        Returns:
-            ToolResult 包含对比结果。
-        """
+        """执行文件对比。需 file1/file2，可选 action: compare/unified_diff。"""
         if not self.validate_input(params):
             return ToolResult(
                 success=False,

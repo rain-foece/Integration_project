@@ -1,12 +1,12 @@
-﻿"""数据库会话与引擎管理模块。"""
+# 数据库会话与引擎管理模块
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from server.config import settings
 
 
+# SQLAlchemy 声明式基类
 class Base(DeclarativeBase):
-    """SQLAlchemy 声明式基类。"""
     pass
 
 
@@ -29,8 +29,8 @@ async_session_factory = async_sessionmaker(
 )
 
 
+# FastAPI 依赖注入：获取数据库会话
 async def get_db() -> AsyncSession:
-    """FastAPI 依赖注入：获取数据库会话。"""
     async with async_session_factory() as session:
         try:
             yield session
@@ -42,12 +42,12 @@ async def get_db() -> AsyncSession:
             await session.close()
 
 
+# 初始化数据库，创建所有表
 async def init_db():
-    """初始化数据库，创建所有表。"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
+# 关闭数据库引擎
 async def close_db():
-    """关闭数据库引擎。"""
     await engine.dispose()

@@ -1,7 +1,4 @@
-﻿"""PhotoRec / TestDisk 适配器。
-
-通过 subprocess 调用 PhotoRec 进行文件恢复，支持从磁盘镜像、分区中恢复已删除文件。
-"""
+﻿# PhotoRec / TestDisk 适配器，通过 subprocess 调用 PhotoRec 恢复文件。
 
 import asyncio
 import os
@@ -10,14 +7,8 @@ import time
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
 
+# PhotoRec/TestDisk 文件恢复适配器，支持 recover/analyze/list_files。
 class TestDiskAdapter(BaseToolAdapter):
-    """PhotoRec/TestDisk 文件恢复适配器。
-
-    支持的命令:
-        - recover: 使用 PhotoRec 恢复文件
-        - analyze: 使用 TestDisk 分析分区表
-        - list_files: 列出可恢复的文件类型
-    """
 
     @property
     def tool_name(self) -> str:

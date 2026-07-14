@@ -1,8 +1,4 @@
-﻿"""Volatility 3 适配器。
-
-通过 subprocess 调用 Volatility 3 进行内存取证分析，支持进程列表、网络连接、
-注册表分析等插件。
-"""
+﻿# Volatility 3 适配器，通过 subprocess 调用 Volatility 3 进行内存取证分析。
 
 import asyncio
 import json
@@ -40,14 +36,8 @@ _SUPPORTED_PLUGINS = {
 }
 
 
+# Volatility 3 内存取证分析适配器，支持 run/list/info 命令。
 class VolatilityAdapter(BaseToolAdapter):
-    """Volatility 3 内存取证分析适配器。
-
-    支持的命令:
-        - run: 运行指定插件
-        - list: 列出可用插件
-        - info: 获取内存镜像信息
-    """
 
     @property
     def tool_name(self) -> str:

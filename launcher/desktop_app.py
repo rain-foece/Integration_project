@@ -1,12 +1,4 @@
-"""取证平台桌面应用 - 原生窗口 + 内置后端。
-
-使用 pywebview 创建原生 Windows 桌面窗口，
-后台自动启动 FastAPI 服务器，无需浏览器。
-
-用法:
-    python launcher/desktop_app.py              # 默认端口 8000
-    python launcher/desktop_app.py --port 8080  # 自定义端口
-"""
+# 取证平台桌面应用 - 原生窗口 + 内置后端。
 
 import sys
 import os

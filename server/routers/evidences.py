@@ -1,4 +1,4 @@
-﻿"""证据上传/下载/哈希校验路由。"""
+# 证据上传/下载/哈希校验路由
 
 import os
 from pathlib import Path
@@ -19,10 +19,8 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/evidences", tags=["证据管理"])
 
 
-# ========== Pydantic Schema ==========
-
+# 证据响应
 class EvidenceResponse(BaseModel):
-    """证据响应。"""
     id: int
     case_id: int
     name: str
@@ -36,49 +34,42 @@ class EvidenceResponse(BaseModel):
         from_attributes = True
 
 
+# 证据列表响应
 class EvidenceListResponse(BaseModel):
-    """证据列表响应。"""
     items: list[EvidenceResponse]
     total: int
     skip: int
     limit: int
 
 
+# 哈希校验请求
 class HashVerifyRequest(BaseModel):
-    """哈希校验请求。"""
-    expected_hash: str = Field(..., min_length=64, max_length=64, description="预期的 SHA-256 哈希值")
+    expected_hash: str = Field(..., min_length=64, max_length=64)
 
 
+# 哈希校验响应
 class HashVerifyResponse(BaseModel):
-    """哈希校验响应。"""
     evidence_id: int
     expected_hash: str
     actual_hash: str
     match: bool
 
 
-# ========== Pydantic Schema (JSON body) ==========
-
+# 通过本地路径注册证据（JSON body 方式，适合大文件取证场景）
 class EvidenceCreateRequest(BaseModel):
-    """通过本地路径注册证据（JSON body 方式，适合大文件取证场景）。"""
-    case_id: int = Field(..., description="关联案件 ID")
-    name: str = Field(..., min_length=1, description="证据名称")
-    file_path: str = Field(..., min_length=1, description="证据文件本地路径")
-    file_type: str = Field(default="raw", description="文件类型")
+    case_id: int = Field(...)
+    name: str = Field(..., min_length=1)
+    file_path: str = Field(..., min_length=1)
+    file_type: str = Field(default="raw")
 
 
-# ========== 路由 ==========
-
+# 通过本地路径注册证据（适合大文件取证场景，无需HTTP上传），系统会自动计算文件的 SHA-256 哈希值并记录文件大小
 @router.post("", response_model=EvidenceResponse, status_code=201)
 async def register_evidence_by_path(
     body: EvidenceCreateRequest,
     request: Request = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """通过本地路径注册证据（适合大文件取证场景，无需HTTP上传）。
-
-    系统会自动计算文件的 SHA-256 哈希值并记录文件大小。
-    """
     file_path = Path(body.file_path)
     if not file_path.exists():
         raise AppError(code="FILE_NOT_FOUND", message=f"文件不存在: {body.file_path}", status_code=400)
@@ -125,17 +116,14 @@ async def register_evidence_by_path(
     return _evidence_to_response(evidence)
 
 
+# 上传证据文件并自动计算 SHA-256 哈希值，文件将保存到配置的存储目录中
 @router.post("/upload", response_model=EvidenceResponse, status_code=201)
 async def upload_evidence(
-    case_id: int = Query(..., description="关联案件 ID"),
-    file: UploadFile = File(..., description="证据文件"),
+    case_id: int = Query(...),
+    file: UploadFile = File(...),
     request: Request = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """上传证据文件并自动计算 SHA-256 哈希值。
-
-    文件将保存到配置的存储目录中，并记录到数据库。
-    """
     # 验证文件扩展名
     if file.filename is None:
         raise AppError(code="INVALID_FILE", message="文件名不能为空", status_code=400)
@@ -209,14 +197,14 @@ async def upload_evidence(
     return _evidence_to_response(evidence)
 
 
+# 获取证据列表（分页）
 @router.get("", response_model=EvidenceListResponse)
 async def list_evidences(
-    case_id: int | None = Query(None, description="按案件过滤"),
+    case_id: int | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    """获取证据列表（分页）。"""
     from sqlalchemy import select, func
 
     query = select(Evidence)
@@ -242,12 +230,12 @@ async def list_evidences(
     )
 
 
+# 获取单个证据详情
 @router.get("/{evidence_id}", response_model=EvidenceResponse)
 async def get_evidence(
     evidence_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """获取单个证据详情。"""
     from sqlalchemy import select
     result = await db.execute(select(Evidence).where(Evidence.id == evidence_id))
     evidence = result.scalar_one_or_none()
@@ -256,12 +244,12 @@ async def get_evidence(
     return _evidence_to_response(evidence)
 
 
+# 下载证据文件
 @router.get("/{evidence_id}/download")
 async def download_evidence(
     evidence_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """下载证据文件。"""
     from sqlalchemy import select
     result = await db.execute(select(Evidence).where(Evidence.id == evidence_id))
     evidence = result.scalar_one_or_none()
@@ -279,13 +267,13 @@ async def download_evidence(
     )
 
 
+# 验证证据文件的 SHA-256 哈希值
 @router.post("/{evidence_id}/verify", response_model=HashVerifyResponse)
 async def verify_evidence_hash(
     evidence_id: int,
     body: HashVerifyRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """验证证据文件的 SHA-256 哈希值。"""
     from sqlalchemy import select
     result = await db.execute(select(Evidence).where(Evidence.id == evidence_id))
     evidence = result.scalar_one_or_none()
@@ -302,13 +290,13 @@ async def verify_evidence_hash(
     )
 
 
+# 删除证据记录及其文件
 @router.delete("/{evidence_id}")
 async def delete_evidence(
     evidence_id: int,
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """删除证据记录及其文件。"""
     from sqlalchemy import select
     result = await db.execute(select(Evidence).where(Evidence.id == evidence_id))
     evidence = result.scalar_one_or_none()
@@ -337,8 +325,6 @@ async def delete_evidence(
     return {"message": "证据已删除"}
 
 
-# ========== 工具函数 ==========
-
 def _evidence_to_response(evidence: Evidence) -> EvidenceResponse:
     return EvidenceResponse(
         id=evidence.id,
@@ -357,4 +343,3 @@ def _get_client_ip(request: Request) -> str:
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
-

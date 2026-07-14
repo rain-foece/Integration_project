@@ -1,12 +1,4 @@
-﻿r"""iBackupBot 适配器（纯 Python 实现）。
-
-使用 plistlib + sqlite3 标准库解析 iOS iTunes 备份数据。
-说明：需要用户已经通过 iTunes 备份到本地，系统只负责解析提取。
-
-支持的 iTunes 备份默认路径:
-  - Windows: %APPDATA%\Apple Computer\MobileSync\Backup\
-  - 或:      %USERPROFILE%\Apple\MobileSync\Backup\
-"""
+﻿# iBackupBot 适配器（纯 Python 实现），使用 plistlib + sqlite3 解析 iOS iTunes 备份数据。
 
 import os
 import plistlib
@@ -16,9 +8,7 @@ from datetime import datetime, timezone
 
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
-# ---------------------------------------------------------------------------
 # 常见 iTunes 备份路径
-# ---------------------------------------------------------------------------
 _DEFAULT_BACKUP_ROOTS = [
     os.path.join(os.environ.get("APPDATA", ""), "Apple Computer", "MobileSync", "Backup"),
     os.path.join(os.environ.get("USERPROFILE", ""), "Apple", "MobileSync", "Backup"),
@@ -30,19 +20,8 @@ _CONTACTS_DB_PATH = ("HomeDomain", "Library/AddressBook/AddressBook.sqlitedb")
 _CONTACTS_DB_PATH_ALT = ("HomeDomain", "Library/AddressBook/AddressBookImages.sqlitedb")
 
 
+# iBackupBot iOS 备份分析适配器，使用 plistlib + sqlite3 解析 iTunes 备份，支持 list_backups / extract_sms / extract_contacts。
 class IBackupBotAdapter(BaseToolAdapter):
-    """iBackupBot iOS 备份分析适配器（纯 Python 实现）。
-
-    使用 plistlib 和 sqlite3 标准库解析 iOS iTunes 备份数据，
-    支持列出备份、提取短信和提取联系人。
-
-    说明：需要用户已经通过 iTunes 备份到本地，系统只负责解析提取。
-
-    支持的动作:
-        - list_backups: 列出所有备份及其日期、设备
-        - extract_sms: 提取短信（发件人、日期、内容）
-        - extract_contacts: 提取联系人（姓名、电话、邮箱）
-    """
 
     @property
     def tool_name(self) -> str:
@@ -65,15 +44,7 @@ class IBackupBotAdapter(BaseToolAdapter):
         return ["list_backups", "extract_sms", "extract_contacts", "ios_forensics"]
 
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        Args:
-            params: 必须包含 "action" 键（默认 "list_backups"）。
-                    extract_sms / extract_contacts 动作时还需要 "backup_path" 键。
-
-        Returns:
-            参数是否合法。
-        """
+        """验证 action 参数。extract_sms/extract_contacts 时需要 backup_path。"""
         action = params.get("action", "list_backups")
         if action not in ("list_backups", "extract_sms", "extract_contacts"):
             return False
@@ -81,16 +52,9 @@ class IBackupBotAdapter(BaseToolAdapter):
             return "backup_path" in params
         return True
 
-    # ------------------------------------------------------------------
-    # 工具方法：定位备份目录
-    # ------------------------------------------------------------------
     @staticmethod
     def _find_backup_dirs() -> list[str]:
-        """查找系统中所有 iTunes 备份目录。
-
-        Returns:
-            备份目录路径列表。
-        """
+        """查找系统中的 iTunes 备份目录。"""
         found: list[str] = []
         for root in _DEFAULT_BACKUP_ROOTS:
             if not root or not os.path.isdir(root):
@@ -107,14 +71,7 @@ class IBackupBotAdapter(BaseToolAdapter):
 
     @staticmethod
     def _read_manifest_plist(backup_path: str) -> dict | None:
-        """读取备份的 Manifest.plist 文件。
-
-        Args:
-            backup_path: 备份目录路径。
-
-        Returns:
-            解析后的 plist 字典，失败返回 None。
-        """
+        """读取备份的 Manifest.plist 文件。"""
         plist_path = os.path.join(backup_path, "Manifest.plist")
         if not os.path.isfile(plist_path):
             return None
@@ -126,16 +83,7 @@ class IBackupBotAdapter(BaseToolAdapter):
 
     @staticmethod
     def _lookup_file_in_manifest_db(backup_path: str, domain: str, relative_path: str) -> str | None:
-        """在 Manifest.db 中查找指定域和路径对应的备份文件 hash。
-
-        Args:
-            backup_path: 备份目录路径。
-            domain: 文件所属域（如 "HomeDomain"）。
-            relative_path: 文件在设备上的相对路径。
-
-        Returns:
-            备份文件的实际文件名（SHA1 hash），未找到返回 None。
-        """
+        """在 Manifest.db 中查找文件 hash，返回备份文件的实际文件名。"""
         manifest_db = os.path.join(backup_path, "Manifest.db")
         if not os.path.isfile(manifest_db):
             return None
@@ -156,15 +104,7 @@ class IBackupBotAdapter(BaseToolAdapter):
 
     @staticmethod
     def _resolve_file_path(backup_path: str, file_id: str) -> str | None:
-        """将 Manifest.db 中的 fileID 解析为备份目录中的实际文件路径。
-
-        Args:
-            backup_path: 备份目录路径。
-            file_id: 文件 ID（SHA1 hash）。
-
-        Returns:
-            实际文件路径，不存在返回 None。
-        """
+        """将 Manifest.db 的 fileID 解析为实际文件路径。"""
         actual = os.path.join(backup_path, file_id[:2], file_id)
         if os.path.isfile(actual):
             return actual
@@ -176,29 +116,13 @@ class IBackupBotAdapter(BaseToolAdapter):
 
     @staticmethod
     def _parse_ios_date(seconds_since_2001: float) -> str:
-        """将 iOS 时间戳（自 2001-01-01 起的秒数）转换为 ISO 格式字符串。
-
-        Args:
-            seconds_since_2001: iOS 时间戳。
-
-        Returns:
-            ISO 8601 格式的日期时间字符串。
-        """
+        """将 iOS 时间戳转换为 ISO 格式字符串。"""
         epoch = datetime(2001, 1, 1, tzinfo=timezone.utc)
         dt = epoch.timestamp() + seconds_since_2001
         return datetime.fromtimestamp(dt, tz=timezone.utc).isoformat()
 
-    # ------------------------------------------------------------------
-    # 动作实现
-    # ------------------------------------------------------------------
     def _action_list_backups(self, params: dict) -> ToolResult:
-        """列出所有 iTunes 备份及其日期、设备信息。
-
-        自动扫描系统中的 iTunes 备份目录，读取 Manifest.plist 获取元数据。
-
-        参数:
-            backup_root: 可选，手动指定备份根目录。
-        """
+        """列出所有 iTunes 备份。backup_root: 可选手动指定备份根目录。"""
         backup_root = params.get("backup_root", "")
         backups: list[dict] = []
 
@@ -260,14 +184,7 @@ class IBackupBotAdapter(BaseToolAdapter):
         )
 
     def _action_extract_sms(self, params: dict) -> ToolResult:
-        """提取短信数据。
-
-        从备份中解析 sms.db 数据库，提取短信的发件人、日期和内容。
-
-        参数:
-            backup_path: 备份目录路径。
-            output_file: 可选，将结果写入 CSV 文件。
-        """
+        """提取短信数据。backup_path: 备份目录，output_file: 可选 CSV 输出。"""
         backup_path = params["backup_path"]
         output_file = params.get("output_file", "")
 
@@ -373,14 +290,7 @@ class IBackupBotAdapter(BaseToolAdapter):
         )
 
     def _action_extract_contacts(self, params: dict) -> ToolResult:
-        """提取联系人数据。
-
-        从备份中解析通讯录数据库，提取联系人的姓名、电话和邮箱。
-
-        参数:
-            backup_path: 备份目录路径。
-            output_file: 可选，将结果写入 CSV 文件。
-        """
+        """提取联系人数据。backup_path: 备份目录，output_file: 可选 CSV 输出。"""
         backup_path = params["backup_path"]
         output_file = params.get("output_file", "")
 
@@ -480,12 +390,9 @@ class IBackupBotAdapter(BaseToolAdapter):
             },
         )
 
-    # ------------------------------------------------------------------
-    # 辅助方法
-    # ------------------------------------------------------------------
     @staticmethod
     def _get_sms_columns(conn: sqlite3.Connection | None) -> list[str]:
-        """探测 sms.db 中 message 表的列名，兼容不同 iOS 版本。"""
+        """探测 sms.db message 表的列名（兼容不同 iOS 版本）。"""
         if conn is None:
             return []
         try:
@@ -496,7 +403,7 @@ class IBackupBotAdapter(BaseToolAdapter):
 
     @staticmethod
     def _write_sms_csv(messages: list[dict], output_file: str) -> str:
-        """将短信数据写入 CSV 文件。"""
+        """将短信列表写入 CSV 文件，返回绝对路径。"""
         import csv
 
         out_dir = os.path.dirname(os.path.abspath(output_file))
@@ -546,18 +453,8 @@ class IBackupBotAdapter(BaseToolAdapter):
 
         return os.path.abspath(output_file)
 
-    # ------------------------------------------------------------------
-    # 主入口
-    # ------------------------------------------------------------------
     async def run(self, params: dict) -> ToolResult:
-        """异步执行工具。
-
-        Args:
-            params: 参数字典，必须包含 "action" 键。
-
-        Returns:
-            ToolResult 执行结果。
-        """
+        """异步执行工具。action: list_backups/extract_sms/extract_contacts。"""
         if not self.validate_input(params):
             return ToolResult(
                 success=False,

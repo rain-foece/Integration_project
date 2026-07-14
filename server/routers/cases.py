@@ -1,4 +1,4 @@
-﻿"""案件（Case）CRUD 路由。"""
+# 案件（Case）CRUD 路由
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,24 +11,22 @@ from server.routers.error_handlers import AppError, error_response
 router = APIRouter(prefix="/cases", tags=["案件管理"])
 
 
-# ========== Pydantic Schema ==========
-
+# 创建案件请求
 class CaseCreateRequest(BaseModel):
-    """创建案件请求。"""
-    case_number: str = Field(..., min_length=1, max_length=64, description="案件编号")
-    name: str = Field(..., min_length=1, max_length=256, description="案件名称")
-    description: str | None = Field(None, max_length=2048, description="案件描述")
+    case_number: str = Field(..., min_length=1, max_length=64)
+    name: str = Field(..., min_length=1, max_length=256)
+    description: str | None = Field(None, max_length=2048)
 
 
+# 更新案件请求
 class CaseUpdateRequest(BaseModel):
-    """更新案件请求。"""
-    name: str | None = Field(None, max_length=256, description="案件名称")
-    description: str | None = Field(None, max_length=2048, description="案件描述")
-    status: CaseStatus | None = Field(None, description="案件状态")
+    name: str | None = Field(None, max_length=256)
+    description: str | None = Field(None, max_length=2048)
+    status: CaseStatus | None = Field(None)
 
 
+# 案件响应
 class CaseResponse(BaseModel):
-    """案件响应。"""
     id: int
     case_number: str
     name: str
@@ -41,23 +39,21 @@ class CaseResponse(BaseModel):
         from_attributes = True
 
 
+# 案件列表响应
 class CaseListResponse(BaseModel):
-    """案件列表响应。"""
     items: list[CaseResponse]
     total: int
     skip: int
     limit: int
 
 
-# ========== 路由 ==========
-
+# 创建新案件
 @router.post("", response_model=CaseResponse, status_code=201)
 async def create_case(
     body: CaseCreateRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """创建新案件。"""
     try:
         case = await case_service.create_case(
             db=db,
@@ -72,14 +68,14 @@ async def create_case(
         raise AppError(code="CASE_CREATE_ERROR", message=str(e), status_code=400)
 
 
+# 获取案件列表（分页）
 @router.get("", response_model=CaseListResponse)
 async def list_cases(
-    status: CaseStatus | None = Query(None, description="按状态过滤"),
-    skip: int = Query(0, ge=0, description="偏移量"),
-    limit: int = Query(20, ge=1, le=100, description="每页数量"),
+    status: CaseStatus | None = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    """获取案件列表（分页）。"""
     cases, total = await case_service.list_cases(db=db, status=status, skip=skip, limit=limit)
     return CaseListResponse(
         items=[_case_to_response(c) for c in cases],
@@ -89,18 +85,19 @@ async def list_cases(
     )
 
 
+# 获取单个案件详情
 @router.get("/{case_id}", response_model=CaseResponse)
 async def get_case(
     case_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """获取单个案件详情。"""
     case = await case_service.get_case(db=db, case_id=case_id)
     if not case:
         raise AppError(code="CASE_NOT_FOUND", message=f"案件不存在: case_id={case_id}", status_code=404)
     return _case_to_response(case)
 
 
+# 更新案件信息
 @router.patch("/{case_id}", response_model=CaseResponse)
 async def update_case(
     case_id: int,
@@ -108,7 +105,6 @@ async def update_case(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """更新案件信息。"""
     case = await case_service.update_case(
         db=db,
         case_id=case_id,
@@ -123,13 +119,13 @@ async def update_case(
     return _case_to_response(case)
 
 
+# 删除案件（级联删除关联数据）
 @router.delete("/{case_id}")
 async def delete_case(
     case_id: int,
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """删除案件（级联删除关联数据）。"""
     success = await case_service.delete_case(
         db=db,
         case_id=case_id,
@@ -141,10 +137,8 @@ async def delete_case(
     return {"message": "案件已删除"}
 
 
-# ========== 工具函数 ==========
-
+# 将 Case 模型转换为响应对象
 def _case_to_response(case) -> CaseResponse:
-    """将 Case 模型转换为响应对象。"""
     return CaseResponse(
         id=case.id,
         case_number=case.case_number,
@@ -156,8 +150,8 @@ def _case_to_response(case) -> CaseResponse:
     )
 
 
+# 获取客户端 IP 地址
 def _get_client_ip(request: Request) -> str:
-    """获取客户端 IP 地址。"""
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         return forwarded.split(",")[0].strip()

@@ -1,7 +1,4 @@
-﻿"""John the Ripper 适配器。
-
-通过 subprocess 调用 John the Ripper 进行密码哈希破解，支持多种哈希格式。
-"""
+﻿# John the Ripper 适配器，通过 subprocess 调用 John 进行密码哈希破解。
 
 import asyncio
 import os
@@ -40,15 +37,8 @@ _FORMATS = {
 }
 
 
+# John the Ripper 密码破解适配器，支持 crack/show/test/list_formats。
 class JohnAdapter(BaseToolAdapter):
-    """John the Ripper 密码破解适配器。
-
-    支持的命令:
-        - crack: 执行密码破解
-        - show: 显示已破解结果
-        - test: 测试性能基准
-        - list_formats: 列出支持的格式
-    """
 
     @property
     def tool_name(self) -> str:

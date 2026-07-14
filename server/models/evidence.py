@@ -1,4 +1,4 @@
-﻿"""证据（Evidence）数据模型。"""
+# 证据（Evidence）数据模型
 
 from datetime import datetime
 from sqlalchemy import String, DateTime, BigInteger, ForeignKey, func

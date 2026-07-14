@@ -1,7 +1,4 @@
-﻿"""NetworkMiner 适配器。
-
-通过 subprocess 调用 NetworkMiner 进行 PCAP 文件解析，提取文件、证书、凭证等信息。
-"""
+﻿# NetworkMiner 适配器，通过 subprocess 调用 NetworkMiner 解析 PCAP 文件。
 
 import asyncio
 import os
@@ -10,14 +7,8 @@ import time
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
 
+# NetworkMiner 网络取证分析适配器，支持 extract/analyze/live。
 class NetworkMinerAdapter(BaseToolAdapter):
-    """NetworkMiner 网络取证分析适配器。
-
-    支持的命令:
-        - extract: 从 PCAP 目录提取文件和信息
-        - analyze: 分析单个 PCAP 文件
-        - live: 实时抓包分析
-    """
 
     @property
     def tool_name(self) -> str:

@@ -1,4 +1,4 @@
-﻿"""报告生成业务逻辑模块 — 支持按工具类型生成格式化 HTML 报告。"""
+# 报告生成业务逻辑模块 — 支持按工具类型生成格式化 HTML 报告
 
 import json
 from typing import Optional
@@ -15,7 +15,7 @@ from server.services.logging import get_logger
 logger = get_logger(__name__)
 
 
-# ── 工具中文名称映射 ──────────────────────────────────────────────
+# 工具中文名称映射
 TOOL_NAMES_ZH = {
     "exiftool": "ExifTool 元数据提取",
     "wireshark": "Wireshark 网络流量分析",
@@ -35,7 +35,7 @@ TOOL_NAMES_ZH = {
     "beyond_compare": "Beyond Compare 文件对比",
 }
 
-# ── 工具分类映射 ──────────────────────────────────────────────────
+# 工具分类映射
 TOOL_CATEGORY = {
     "exiftool": "元数据与文件分析",
     "wireshark": "网络流量分析",
@@ -56,6 +56,7 @@ TOOL_CATEGORY = {
 }
 
 
+# 为案件创建一份报告
 async def create_report(
     db: AsyncSession,
     case_id: int,
@@ -64,7 +65,6 @@ async def create_report(
     operator: str | None = None,
     ip_address: str | None = None,
 ) -> Report:
-    """为案件创建一份报告。"""
     case = await db.execute(select(Case).where(Case.id == case_id))
     case = case.scalar_one_or_none()
     if not case:
@@ -112,11 +112,11 @@ async def list_reports(
     return list(reports), total
 
 
+# 为报告生成格式化 HTML 文件
 async def generate_report_html(
     db: AsyncSession,
     report_id: int,
 ) -> Report | None:
-    """为报告生成格式化 HTML 文件。"""
     report = await get_report(db, report_id)
     if not report:
         return None
@@ -155,16 +155,8 @@ async def generate_report_pdf(
     return report
 
 
-# ===================================================================
-#  HTML 报告模板构建
-# ===================================================================
-
+# 构建格式化的 HTML 取证报告，根据报告内容中的 tool_name 自动选择对应的格式化模板
 def _build_html_report(report: Report) -> str:
-    """构建格式化的 HTML 取证报告。
-
-    根据报告内容中的 tool_name 自动选择对应的格式化模板。
-    对于 exiftool 等元数据工具，以表格形式展示；对于其他工具，以结构化面板展示。
-    """
     content = report.content or {}
     tool_name = content.get("tool_name", "unknown")
     result = content.get("result", {})
@@ -255,12 +247,11 @@ td.val {{ word-break: break-all; font-family: 'Consolas', 'Courier New', monospa
 </html>"""
 
 
+# 根据工具类型构建不同的结果展示区域
 def _build_result_sections(tool_name: str, result: dict) -> str:
-    """根据工具类型构建不同的结果展示区域。"""
     if not result:
         return '<div class="section"><h2>分析结果</h2><p class="muted">无结果数据</p></div>'
 
-    # 如果是纯字符串结果，直接展示
     if isinstance(result, str):
         return f'<div class="section"><h2>分析结果</h2><pre style="background:#1a2332;padding:16px;border-radius:6px;white-space:pre-wrap;font-family:Consolas,monospace;font-size:0.82rem;">{result}</pre></div>'
 
@@ -271,18 +262,16 @@ def _build_result_sections(tool_name: str, result: dict) -> str:
     if tool_name == "exiftool":
         return _build_exiftool_sections(result)
 
-    # 通用格式化
     return _build_generic_sections(result)
 
 
+# 为 exiftool 构建格式化的元数据报告区域
 def _build_exiftool_sections(result: dict) -> str:
-    """为 exiftool 构建格式化的元数据报告区域。"""
     md = result.get("metadata", result)
     file_info = result.get("file", "")
 
     html = ""
 
-    # 文件基本信息卡片
     if file_info:
         html += _make_info_cards([
             ("文件路径", file_info),
@@ -290,13 +279,11 @@ def _build_exiftool_sections(result: dict) -> str:
             ("分析状态", '<span class="success">✅ 提取成功</span>'),
         ])
 
-    # 基本信息表
     basic_keys = ["FileName", "FileSize", "FileSizeHR", "FileTypeExtension", "MIMEType"]
     basic_rows = [(k, str(md.get(k, "-"))) for k in basic_keys if k in md]
     if basic_rows:
         html += _make_section("📁 文件基本信息", _make_table(basic_rows))
 
-    # 哈希值表
     hash_keys = ["SHA256", "MD5"]
     hash_rows = []
     for k in hash_keys:
@@ -305,31 +292,26 @@ def _build_exiftool_sections(result: dict) -> str:
     if hash_rows:
         html += _make_section("🔐 哈希校验", _make_table(hash_rows))
 
-    # 时间戳表
     time_keys = ["FileModifyDate", "FileAccessDate", "FileCreateDate"]
     time_rows = [(k, str(md.get(k, "-"))) for k in time_keys if k in md]
     if time_rows:
         html += _make_section("🕐 时间戳信息", _make_table(time_rows))
 
-    # PE 分析
     pe_keys = ["FileFormat", "MachineType", "PEMagic", "NumberOfSections", "EntryPoint", "ImageBase", "PETimestamp"]
     pe_rows = [(k, str(md.get(k, "-"))) for k in pe_keys if k in md]
     if pe_rows:
         html += _make_section("⚙️ PE 文件分析", _make_table(pe_rows))
 
-    # 图片信息
     img_keys = ["ImageFormat", "ImageWidth", "ImageHeight"]
     img_rows = [(k, str(md.get(k, "-"))) for k in img_keys if k in md]
     if img_rows:
         html += _make_section("🖼️ 图片属性", _make_table(img_rows))
 
-    # 文件头信息
     header_keys = ["MagicBytes", "MagicString", "FileHeader"]
     header_rows = [(k, f'<span style="font-family:Consolas,monospace;font-size:0.78rem">{md.get(k, "-")}</span>') for k in header_keys if k in md]
     if header_rows:
         html += _make_section("🔍 文件头与魔数", _make_table(header_rows))
 
-    # 其余未知字段
     shown = set(basic_keys + hash_keys + time_keys + pe_keys + img_keys + header_keys)
     other_rows = [(k, str(v)) for k, v in md.items() if k not in shown]
     if other_rows:
@@ -339,10 +321,8 @@ def _build_exiftool_sections(result: dict) -> str:
 
 
 def _build_generic_sections(result: dict) -> str:
-    """通用结果格式化。"""
     html = ""
 
-    # 如果 result 有明确的结构，尝试格式化
     for section_key, section_value in result.items():
         if isinstance(section_value, dict):
             rows = [(k, str(v)) for k, v in section_value.items()]
@@ -355,8 +335,6 @@ def _build_generic_sections(result: dict) -> str:
 
     return html
 
-
-# ── HTML 构建辅助函数 ─────────────────────────────────────────────
 
 def _make_section(title: str, body: str) -> str:
     return f'<div class="section"><h2>{title}</h2>{body}</div>'
@@ -376,4 +354,3 @@ def _make_info_cards(items: list[tuple[str, str]]) -> str:
         for label, value in items
     )
     return f'<div class="section"><div class="card-grid">{cards}</div></div>'
-

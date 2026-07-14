@@ -1,7 +1,4 @@
-﻿"""WinDbg / CDB 适配器。
-
-通过 subprocess 调用 CDB（命令行调试器）进行 Windows 崩溃转储分析。
-"""
+﻿# WinDbg / CDB 适配器，通过 subprocess 调用 CDB 进行崩溃转储分析。
 
 import asyncio
 import os
@@ -10,16 +7,8 @@ import time
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
 
+# WinDbg/CDB 崩溃转储分析适配器，支持 analyze/stack/modules/memory/custom。
 class WinDbgAdapter(BaseToolAdapter):
-    """WinDbg/CDB 崩溃转储分析适配器。
-
-    支持的命令:
-        - analyze: 运行 !analyze -v 自动分析
-        - stack: 获取调用栈
-        - modules: 列出加载模块
-        - memory: 读取内存区域
-        - custom: 运行自定义命令
-    """
 
     @property
     def tool_name(self) -> str:

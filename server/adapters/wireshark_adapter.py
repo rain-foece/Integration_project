@@ -1,7 +1,4 @@
-﻿"""Wireshark 适配器（纯 Python 实现）。
-
-基于 scapy 库解析 PCAP 网络流量文件，无需外部可执行文件。
-"""
+﻿# Wireshark 适配器（纯 Python 实现），基于 scapy 解析 PCAP 网络流量文件。
 
 import os
 import time
@@ -28,8 +25,8 @@ except ImportError as e:
         pass
 
 
+# PCAP 网络流量分析适配器（纯 Python）。
 class WiresharkAdapter(BaseToolAdapter):
-    """PCAP 网络流量分析适配器（纯 Python）。"""
 
     VALID_ACTIONS = ("pcap_summary", "pcap_parse", "protocol_stats", "extract_http")
 
@@ -53,15 +50,11 @@ class WiresharkAdapter(BaseToolAdapter):
         pass
 
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数：必须包含 file_path 或 file。"""
+        """验证 file_path/file 和 action 参数。"""
         if "file_path" not in params and "file" not in params:
             return False
         action = params.get("action", "pcap_summary")
         return action in self.VALID_ACTIONS
-
-    # ------------------------------------------------------------------
-    # 内部工具方法
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _resolve_file_path(params: dict) -> str:
@@ -116,12 +109,8 @@ class WiresharkAdapter(BaseToolAdapter):
         dt = datetime.datetime.fromtimestamp(timestamp)
         return dt.strftime("%Y-%m-%d %H:%M:%S.") + f"{dt.microsecond:06d}"
 
-    # ------------------------------------------------------------------
-    # 功能实现
-    # ------------------------------------------------------------------
-
     def _do_pcap_summary(self, packets: list[Packet], file_path: str) -> dict:
-        """解析 PCAP 文件，输出总包数、时间范围、协议分布。"""
+        """输出总包数、时间范围、协议分布。"""
         total = len(packets)
         if total == 0:
             return {
@@ -157,7 +146,7 @@ class WiresharkAdapter(BaseToolAdapter):
         }
 
     def _do_pcap_parse(self, packets: list[Packet], file_path: str) -> dict:
-        """解析 PCAP 文件，输出前 100 个包的详细信息。"""
+        """输出前 100 个包的详细信息。"""
         total = len(packets)
         limit = min(total, 100)
 
@@ -196,7 +185,7 @@ class WiresharkAdapter(BaseToolAdapter):
         }
 
     def _do_protocol_stats(self, packets: list[Packet], file_path: str) -> dict:
-        """协议统计（各协议数量、占比）。"""
+        """各协议数量及占比统计。"""
         total = len(packets)
         protocol_counter = Counter()
         for pkt in packets:
@@ -218,7 +207,7 @@ class WiresharkAdapter(BaseToolAdapter):
         }
 
     def _do_extract_http(self, packets: list[Packet], file_path: str) -> dict:
-        """提取 HTTP 请求/响应。"""
+        """提取 HTTP 请求和响应。"""
         requests = []
         responses = []
 
@@ -262,10 +251,6 @@ class WiresharkAdapter(BaseToolAdapter):
             "http_requests": requests,
             "http_responses": responses,
         }
-
-    # ------------------------------------------------------------------
-    # 主入口
-    # ------------------------------------------------------------------
 
     async def run(self, params: dict) -> ToolResult:
         """执行网络流量分析。"""

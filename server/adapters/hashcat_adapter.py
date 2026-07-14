@@ -1,8 +1,4 @@
-﻿"""Hashcat 适配器（纯 Python 实现）。
-
-使用 hashlib 标准库实现哈希类型自动识别功能。
-注意：这是哈希识别器，不是破解器。实际破解需要 GPU 加速，请安装 hashcat。
-"""
+﻿# Hashcat 适配器（纯 Python），基于 hashlib 实现哈希类型自动识别。
 
 import hashlib
 import re
@@ -295,8 +291,8 @@ _SAMPLE_STRINGS = [
 ]
 
 
+# 预计算常见字符串的多种哈希值，用于演示和对比。
 def _compute_sample_hashes() -> list[dict]:
-    """预计算常见字符串的多种哈希值，用于演示和对比。"""
     results = []
     for text in _SAMPLE_STRINGS:
         entry = {
@@ -310,14 +306,8 @@ def _compute_sample_hashes() -> list[dict]:
     return results
 
 
+# 哈希类型识别适配器，基于长度和格式识别 30+ 种哈希类型。注意：非破解器。
 class HashcatAdapter(BaseToolAdapter):
-    """Hashcat 哈希识别适配器（纯 Python 实现）。
-
-    根据哈希值长度和格式自动识别哈希类型，支持 30+ 种常见哈希格式。
-    注意：这是哈希类型识别器，不是密码破解器。
-    实际密码破解需要 GPU 加速，请安装 hashcat 原版工具。
-    """
-
     @property
     def tool_name(self) -> str:
         return "hashcat"
@@ -338,26 +328,16 @@ class HashcatAdapter(BaseToolAdapter):
     def capabilities(self) -> list[str]:
         return ["hash_identification", "hash_analysis", "hash_samples"]
 
+    # 验证输入参数：需要 hash 或 hash_value 参数。
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        需要 hash 或 hash_value 参数。
-        """
         return "hash" in params or "hash_value" in params
 
+    # 从参数中提取哈希值。
     def _get_hash_value(self, params: dict) -> str:
-        """从参数中提取哈希值。"""
         return params.get("hash", params.get("hash_value", ""))
 
+    # 根据哈希值识别可能的哈希类型，返回按优先级排序的匹配列表（精确格式匹配优先）。
     def _identify_hash_type(self, hash_value: str) -> list[dict]:
-        """根据哈希值识别可能的哈希类型。
-
-        Args:
-            hash_value: 待识别的哈希字符串
-
-        Returns:
-            匹配的哈希类型列表，按优先级排序（精确格式匹配优先）
-        """
         stripped = hash_value.strip()
         matches = []
 
@@ -388,12 +368,8 @@ class HashcatAdapter(BaseToolAdapter):
         matches = exact_matches + hex_matches
         return matches
 
+    # 分析哈希值的详细特征，返回包含长度、字符集、十六进制比例等分析信息的字典。
     def _analyze_hash(self, hash_value: str) -> dict:
-        """分析哈希值的详细特征。
-
-        Returns:
-            包含长度、字符集、十六进制比例等分析信息的字典。
-        """
         stripped = hash_value.strip()
 
         hex_chars = set("0123456789abcdefABCDEF")
@@ -424,18 +400,8 @@ class HashcatAdapter(BaseToolAdapter):
             "starts_with": stripped[:4] if len(stripped) >= 4 else stripped,
         }
 
+    # 执行哈希类型识别。需 hash 或 hash_value 参数，可选 action: identify/samples。
     async def run(self, params: dict) -> ToolResult:
-        """执行哈希类型识别。
-
-        Args:
-            params: 参数字典，必须包含:
-                - hash 或 hash_value: 待识别的哈希字符串
-                可选:
-                - action: "identify"（默认）或 "samples"（返回示例哈希）
-
-        Returns:
-            ToolResult 包含识别结果。
-        """
         if not self.validate_input(params):
             return ToolResult(
                 success=False,

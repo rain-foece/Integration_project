@@ -1,7 +1,4 @@
-﻿"""Process Explorer 适配器（纯 Python 实现）。
-
-基于 psutil 库，无需外部 exe，直接通过 Python 接口获取进程信息。
-"""
+﻿# Process Explorer 适配器（纯 Python 实现），基于 psutil 获取进程信息。
 
 import time
 from datetime import datetime
@@ -16,15 +13,8 @@ except ImportError:
     _PSUTIL_AVAILABLE = False
 
 
+# Process Explorer 进程分析适配器，支持 process_list / process_tree / dll_list / network 命令。
 class ProcessExplorerAdapter(BaseToolAdapter):
-    """Process Explorer 进程分析适配器（纯 Python 实现）。
-
-    支持的命令:
-        - process_list: 列出所有进程
-        - process_tree: 构建进程树
-        - dll_list: 列出指定进程加载的 DLL
-        - network: 列出所有网络连接
-    """
 
     @property
     def tool_name(self) -> str:
@@ -43,14 +33,7 @@ class ProcessExplorerAdapter(BaseToolAdapter):
         return ["process_list", "process_tree", "dll_analysis", "network_analysis"]
 
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        Args:
-            params: 包含 "action"（可选）和 "pid"（可选）参数的字典。
-
-        Returns:
-            参数是否合法。
-        """
+        """验证 action 参数。dll_list 时需要 pid。"""
         action = params.get("action", "process_list")
         valid_actions = {"process_list", "process_tree", "dll_list", "network"}
         if action not in valid_actions:
@@ -58,10 +41,6 @@ class ProcessExplorerAdapter(BaseToolAdapter):
         if action == "dll_list":
             return "pid" in params
         return True
-
-    # ------------------------------------------------------------------
-    # 内部辅助方法
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _format_process_info(proc: Any) -> dict:
@@ -106,10 +85,6 @@ class ProcessExplorerAdapter(BaseToolAdapter):
             "status": conn.status,
             "pid": conn.pid or 0,
         }
-
-    # ------------------------------------------------------------------
-    # action 处理
-    # ------------------------------------------------------------------
 
     def _process_list(self) -> dict:
         """列出所有进程。"""
@@ -220,21 +195,8 @@ class ProcessExplorerAdapter(BaseToolAdapter):
             "connections": connections,
         }
 
-    # ------------------------------------------------------------------
-    # 主入口
-    # ------------------------------------------------------------------
-
     async def run(self, params: dict) -> ToolResult:
-        """异步执行进程分析。
-
-        Args:
-            params: 参数字典，支持:
-                - action: "process_list" | "process_tree" | "dll_list" | "network"
-                - pid: 进程 PID（dll_list 必需）
-
-        Returns:
-            ToolResult 执行结果。
-        """
+        """异步执行进程分析。action: process_list/process_tree/dll_list/network。"""
         if not _PSUTIL_AVAILABLE:
             return ToolResult(
                 success=False,

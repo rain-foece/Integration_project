@@ -1,7 +1,4 @@
-﻿"""任务编排与调度业务逻辑模块。
-
-使用 asyncio 后台任务直接执行工具适配器，不依赖 Celery/Redis。
-"""
+# 任务编排与调度业务逻辑模块，使用 asyncio 后台任务直接执行工具适配器，不依赖 Celery/Redis
 
 import asyncio
 import json
@@ -25,6 +22,7 @@ logger = get_logger(__name__)
 _running_tasks: dict[int, asyncio.Task] = {}
 
 
+# 创建并提交一个取证任务，直接通过 asyncio 后台执行
 async def create_task(
     db: AsyncSession,
     case_id: int,
@@ -34,7 +32,6 @@ async def create_task(
     operator: str | None = None,
     ip_address: str | None = None,
 ) -> Task:
-    """创建并提交一个取证任务，直接通过 asyncio 后台执行。"""
     case = await db.execute(select(Case).where(Case.id == case_id))
     case = case.scalar_one_or_none()
     if not case:
@@ -92,13 +89,13 @@ async def create_task(
     return task
 
 
+# 后台执行取证任务，更新状态和进度
 async def _execute_task(
     original_db: AsyncSession,
     task: Task,
     evidence_path: str | None,
     params: dict,
 ):
-    """后台执行取证任务，更新状态和进度。"""
     from server.models.database import async_session_factory
 
     task_id = task.id
@@ -159,8 +156,8 @@ async def _execute_task(
             _running_tasks.pop(task_id, None)
 
 
+# 标记任务失败
 async def _fail_task(db: AsyncSession, task_id: int, error: str):
-    """标记任务失败。"""
     await db.execute(
         update(Task).where(Task.id == task_id).values(
             status=TaskStatus.FAILED,
@@ -266,5 +263,3 @@ async def cancel_task(
 
     logger.info(f"任务已取消 | task_id={task_id}, case_id={task.case_id}, tool_name={task.tool_name}")
     return True
-
-

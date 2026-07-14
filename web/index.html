@@ -26,7 +26,6 @@ body {
   display: flex; min-height: 100vh;
 }
 
-/* Sidebar */
 .sidebar {
   width: 220px; background: var(--bg2);
   border-right: 1px solid var(--rule);
@@ -56,7 +55,6 @@ body {
   font-size: 0.75rem; color: var(--muted);
 }
 
-/* Main */
 .main {
   margin-left: 220px; flex: 1; padding: 1.5rem 2rem;
 }
@@ -68,7 +66,6 @@ body {
 .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--ink); }
 .page-header p { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
 
-/* Stats Grid */
 .stats-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 1rem; margin-bottom: 1.5rem;
@@ -80,14 +77,12 @@ body {
 .stat-card .stat-num { font-size: 2rem; font-weight: 700; color: var(--accent); }
 .stat-card .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
 
-/* Cards */
 .card {
   background: var(--bg2); border: 1px solid var(--rule);
   border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem;
 }
 .card h3 { font-size: 1rem; color: var(--accent); margin-bottom: 0.8rem; }
 
-/* Tables */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 th {
@@ -99,7 +94,6 @@ th {
 td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); }
 tr:hover td { background: rgba(6,182,212,0.03); }
 
-/* Badges */
 .badge {
   display: inline-block; font-size: 0.7rem; font-weight: 600;
   padding: 0.15rem 0.5rem; border-radius: 4px;
@@ -110,7 +104,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 .badge-warn { background: rgba(245,158,11,0.15); color: var(--warn); }
 .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
 
-/* Buttons */
 .btn {
   display: inline-flex; align-items: center; gap: 0.4rem;
   padding: 0.45rem 1rem; border-radius: 6px; font-size: 0.85rem;
@@ -125,7 +118,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
 .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
 
-/* Forms */
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.3rem; }
 .form-group input, .form-group select, .form-group textarea {
@@ -137,7 +129,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
   outline: none; border-color: var(--accent);
 }
 
-/* Modal */
 .modal-bg {
   display: none; position: fixed; top:0; left:0; right:0; bottom:0;
   background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center;
@@ -150,7 +141,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 .modal h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--accent); }
 .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
 
-/* Tool Grid */
 .tool-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;
 }
@@ -180,7 +170,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 .tool-card .tool-links a:hover { background: var(--accent); color: #fff; }
 .tool-card .tool-version { font-size: 0.68rem; color: var(--muted); margin-top: 0.3rem; }
 
-/* Tool detail expand */
 .tool-card .tool-detail {
   max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
   font-size: 0.76rem; color: var(--muted); line-height: 1.6; margin-top: 0;
@@ -188,11 +177,9 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 .tool-card.expanded .tool-detail { max-height: 300px; margin-top: 0.6rem; }
 .tool-card .tool-detail p { margin: 0.3rem 0; }
 
-/* Page sections */
 .page { display: none; }
 .page.active { display: block; }
 
-/* Loading */
 .loading { text-align: center; padding: 3rem; color: var(--muted); }
 .spinner {
   display: inline-block; width: 2rem; height: 2rem;
@@ -201,7 +188,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Tabs */
 .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
 .tab {
   padding: 0.5rem 1rem; cursor: pointer; color: var(--muted);
@@ -210,7 +196,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 .tab:hover { color: var(--ink); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-/* Toast */
 .toast {
   position: fixed; top: 1rem; right: 1rem; z-index: 300;
   padding: 0.8rem 1.2rem; border-radius: 8px; color: #fff;
@@ -221,7 +206,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 .toast-error { background: var(--danger); }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-/* Responsive */
 @media (max-width: 768px) {
   .sidebar { width: 180px; }
   .main { margin-left: 180px; padding: 1rem; }
@@ -229,7 +213,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
   .tool-grid { grid-template-columns: 1fr; }
 }
 
-/* Help Panels */
 .help-panel {
   border-radius: 10px; overflow: hidden; margin-bottom: 1rem;
   border: 1px solid var(--rule);
@@ -250,7 +233,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
 </head>
 <body>
 
-<!-- Sidebar -->
 <nav class="sidebar">
   <div class="sidebar-logo">
     <span class="icon">🔍</span> 取证平台
@@ -277,9 +259,7 @@ tr:hover td { background: rgba(6,182,212,0.03); }
   </div>
 </nav>
 
-<!-- Main Content -->
 <main class="main">
-  <!-- Dashboard -->
   <div id="page-dashboard" class="page active">
     <div class="page-header">
       <h1>取证工作台</h1>
@@ -292,7 +272,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
     </div>
   </div>
 
-  <!-- Cases -->
   <div id="page-cases" class="page">
     <div class="page-header">
       <h1>案件管理</h1>
@@ -302,7 +281,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
     <div class="table-wrap"><table id="cases-table"><thead><tr><th>ID</th><th>案件编号</th><th>名称</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody></tbody></table></div>
   </div>
 
-  <!-- Tools -->
   <div id="page-tools" class="page">
     <div class="page-header">
       <h1>🔧 取证工具</h1>
@@ -324,7 +302,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
     <div class="tool-grid" id="tools-grid"></div>
   </div>
 
-  <!-- Tasks -->
   <div id="page-tasks" class="page">
     <div class="page-header">
       <h1>任务监控</h1>
@@ -333,7 +310,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
     <div class="table-wrap"><table id="tasks-table"><thead><tr><th>ID</th><th>案件</th><th>工具</th><th>状态</th><th>进度</th><th>开始时间</th><th>操作</th></tr></thead><tbody></tbody></table></div>
   </div>
 
-  <!-- Reports -->
   <div id="page-reports" class="page">
     <div class="page-header">
       <h1>报告中心</h1>
@@ -342,7 +318,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
     <div class="table-wrap"><table id="reports-table"><thead><tr><th>ID</th><th>案件</th><th>标题</th><th>创建时间</th><th>操作</th></tr></thead><tbody></tbody></table></div>
   </div>
 
-  <!-- Case Detail -->
   <div id="page-case-detail" class="page">
     <div class="page-header">
       <button class="btn btn-outline" onclick="showPage('cases')">← 返回案件列表</button>
@@ -446,7 +421,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
   </div>
 </main>
 
-<!-- Case Modal -->
 <div class="modal-bg" id="case-modal">
   <div class="modal">
     <h2>新建案件</h2>
@@ -469,7 +443,6 @@ tr:hover td { background: rgba(6,182,212,0.03); }
   </div>
 </div>
 
-<!-- Result Modal -->
 <div class="modal-bg" id="result-modal">
   <div class="modal" style="max-width:800px">
     <h2>分析结果 — 任务 #<span id="result-task-id"></span></h2>
@@ -482,11 +455,9 @@ tr:hover td { background: rgba(6,182,212,0.03); }
   </div>
 </div>
 
-<!-- Toast container -->
 <div id="toast-container"></div>
 
 <script>
-// ========== API ==========
 const API = '/api/v1';
 async function api(method, path, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
@@ -497,7 +468,6 @@ async function api(method, path, body) {
   return data;
 }
 
-// ========== Toast ==========
 function toast(msg, type) {
   const el = document.createElement('div');
   el.className = 'toast toast-' + type;
@@ -506,7 +476,6 @@ function toast(msg, type) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// ========== Navigation ==========
 let currentCaseId = null;
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -526,7 +495,6 @@ document.querySelectorAll('.sidebar-nav a').forEach(a => {
   a.addEventListener('click', e => { e.preventDefault(); showPage(a.dataset.page); });
 });
 
-// Tabs
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
@@ -536,7 +504,6 @@ document.querySelectorAll('.tab').forEach(t => {
   });
 });
 
-// ========== Dashboard ==========
 async function loadDashboard() {
   try {
     const [cases, tools, tasks, reports] = await Promise.all([
@@ -563,7 +530,6 @@ async function loadDashboard() {
   } catch(e) { console.error(e); }
 }
 
-// ========== Cases ==========
 async function loadCases() {
   try {
     const data = await api('GET', '/cases?limit=50');
@@ -607,7 +573,6 @@ async function deleteCase(id) {
   catch(e) { toast('删除失败: ' + e.message, 'error'); }
 }
 
-// ========== Case Detail ==========
 async function openCaseDetail(id) {
   currentCaseId = id;
   showPage('case-detail');
@@ -631,7 +596,6 @@ async function loadEvidences() {
         <td><button class="btn btn-danger btn-sm" onclick="deleteEvidence(${e.id})">删除</button></td>
       </tr>
     `).join('') || '<tr><td colspan="6" style="color:var(--muted)">暂无证据</td></tr>';
-    // Update select
     const sel = document.getElementById('run-evidence-select');
     sel.innerHTML = '<option value="">-- 选择证据 --</option>' + (data.items||[]).map(e => `<option value="${e.id}">${e.name} (${e.file_path})</option>`).join('');
   } catch(e) { console.error(e); }
@@ -729,7 +693,6 @@ async function runTool() {
   } catch(e) { toast('任务提交失败: ' + e.message, 'error'); }
 }
 
-// ========== Tools ==========
 const TOOL_OFFICIAL_SITES = {
   exiftool:      { url: 'https://exiftool.org',                        name: 'ExifTool 官网',          category: '元数据与文件分析' },
   wireshark:     { url: 'https://www.wireshark.org',                   name: 'Wireshark 官网',         category: '网络流量分析' },
@@ -793,27 +756,21 @@ async function loadTools() {
   } catch(e) { toast('加载工具列表失败', 'error'); }
 }
 
-// Helper: select a case then switch to tool tab
 async function openCaseAndRunTool(toolName) {
-  // Load cases first
   const data = await api('GET', '/cases?limit=50');
   const items = data.items || [];
   if (items.length === 0) { toast('请先创建案件', 'error'); return; }
-  // Open the first case
   const c = items[0];
   await openCaseDetail(c.id);
-  // Switch to run-tool tab
   document.querySelectorAll('#case-detail .tab').forEach(t => t.classList.remove('active'));
   const runTab = document.querySelector('#case-detail .tab[data-tab="run-tool"]');
   if (runTab) runTab.classList.add('active');
   document.getElementById('tab-evidence').style.display = 'none';
   document.getElementById('tab-run-tool').style.display = 'block';
-  // Select the tool
   document.getElementById('run-tool-select').value = toolName;
   onToolSelect();
 }
 
-// ========== Tasks ==========
 let tasksTimer = null;
 async function loadTasks() {
   try {
@@ -847,7 +804,6 @@ async function cancelTask(id) {
   catch(e) { toast('取消失败: ' + e.message, 'error'); }
 }
 
-// ========== Reports ==========
 async function loadReports() {
   try {
     const data = await api('GET', '/reports?limit=50');
@@ -866,7 +822,6 @@ function viewReport(id) {
   window.open('/api/v1/reports/' + id + '/view', '_blank');
 }
 
-// ========== Task Results ==========
 let currentResultTaskId = null;
 
 async function viewTaskResult(taskId) {
@@ -945,7 +900,6 @@ async function generateReportFromResult() {
   closeResultModal();
 }
 
-// ========== Init ==========
 loadDashboard();
 </script>
 

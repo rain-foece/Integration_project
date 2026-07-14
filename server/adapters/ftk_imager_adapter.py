@@ -1,8 +1,4 @@
-﻿"""FTK Imager 适配器（纯 Python 实现）。
-
-纯 Python 实现磁盘镜像哈希验证，使用 hashlib 标准库进行哈希计算。
-支持大文件分块读取（64KB 块），显示进度，不依赖外部 exe。
-"""
+﻿# FTK Imager 适配器（纯 Python），使用 hashlib 计算磁盘镜像哈希值。
 
 import hashlib
 import mimetypes
@@ -54,13 +50,8 @@ def _guess_mime_type(file_path: str) -> str:
     return mime_type
 
 
+# 磁盘镜像哈希验证适配器，支持 verify（SHA-256/MD5/SHA-1）和 quick_hash（仅 SHA-256）。
 class FTKImagerAdapter(BaseToolAdapter):
-    """FTK Imager 磁盘镜像哈希验证适配器（纯 Python 实现）。
-
-    使用 hashlib 计算文件的多种哈希值，支持:
-        - action="verify": 计算 SHA-256、MD5、SHA-1、文件大小、MIME 类型、修改时间（默认）
-        - action="quick_hash": 仅计算 SHA-256（快速模式）
-    """
 
     @property
     def tool_name(self) -> str:
@@ -83,10 +74,7 @@ class FTKImagerAdapter(BaseToolAdapter):
         return ["hash_verification", "file_metadata", "disk_image_analysis", "progress_tracking"]
 
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        需要 file 或 file_path 参数。
-        """
+        """需要 file 或 file_path 参数。"""
         return "file" in params or "file_path" in params
 
     def _get_file_path(self, params: dict) -> str:
@@ -95,16 +83,7 @@ class FTKImagerAdapter(BaseToolAdapter):
 
     def _compute_hashes(self, file_path: str, algorithms: list[str],
                         report_progress: bool = False) -> dict:
-        """分块读取文件并计算哈希值。
-
-        Args:
-            file_path: 文件路径
-            algorithms: 要计算的哈希算法列表，如 ["sha256", "md5", "sha1"]
-            report_progress: 是否生成进度报告
-
-        Returns:
-            包含哈希值和进度信息的字典
-        """
+        """分块读取文件并计算哈希值。report_progress 为 True 时生成进度报告。"""
         # 初始化所有哈希对象
         hashers = {}
         for algo in algorithms:
@@ -156,11 +135,7 @@ class FTKImagerAdapter(BaseToolAdapter):
         return result
 
     def _get_file_metadata(self, file_path: str) -> dict:
-        """获取文件的元信息。
-
-        Returns:
-            包含修改时间、创建时间、MIME 类型等的字典。
-        """
+        """获取文件的修改时间、MIME 类型等元信息。"""
         stat = os.stat(file_path)
 
         mtime = datetime.fromtimestamp(stat.st_mtime)
@@ -184,18 +159,7 @@ class FTKImagerAdapter(BaseToolAdapter):
         }
 
     async def run(self, params: dict) -> ToolResult:
-        """执行哈希验证。
-
-        Args:
-            params: 参数字典，必须包含:
-                - file 或 file_path: 文件路径
-                可选:
-                - action: "verify"（默认，计算所有哈希）或 "quick_hash"（仅 SHA-256）
-                - show_progress: 是否显示进度报告（默认 True）
-
-        Returns:
-            ToolResult 包含哈希计算结果和文件元信息。
-        """
+        """执行哈希验证。需 file/file_path，可选 action: verify/quick_hash。"""
         if not self.validate_input(params):
             return ToolResult(
                 success=False,

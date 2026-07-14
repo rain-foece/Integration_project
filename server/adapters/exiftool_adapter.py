@@ -1,8 +1,4 @@
-﻿"""ExifTool 适配器 — 纯 Python 实现。
-
-使用 Python 内置模块提取文件元数据：文件大小、哈希、MIME 类型、
-时间戳、图片尺寸、PE 信息等，无需外部二进制依赖。
-"""
+﻿# ExifTool 适配器（纯 Python 实现），使用内置模块提取文件元数据、哈希、PE 信息等。
 
 import hashlib
 import mimetypes
@@ -14,8 +10,8 @@ from datetime import datetime, timezone, timedelta
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
 
+# 元数据提取适配器，支持通用文件/图片/PE 元数据提取。
 class ExifToolAdapter(BaseToolAdapter):
-    """纯 Python 元数据提取适配器，无需 exiftool.exe。"""
 
     @property
     def tool_name(self) -> str:

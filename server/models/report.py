@@ -1,4 +1,4 @@
-﻿"""报告（Report）数据模型。"""
+# 报告（Report）数据模型
 
 from datetime import datetime
 from sqlalchemy import String, DateTime, ForeignKey, func, JSON

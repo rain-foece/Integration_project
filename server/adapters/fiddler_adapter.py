@@ -1,7 +1,4 @@
-﻿"""Fiddler 适配器。
-
-通过 Fiddler CLI 或 ExecAction.exe 自动化分析 SAZ 会话存档和 HTTP 流量数据。
-"""
+﻿# Fiddler 适配器，通过 subprocess 调用 Fiddler CLI 分析 SAZ 会话存档。
 
 import asyncio
 import json
@@ -11,14 +8,8 @@ import time
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
 
+# Fiddler SAZ 会话分析适配器，支持 export/extract/analyze。
 class FiddlerAdapter(BaseToolAdapter):
-    """Fiddler SAZ 会话分析适配器。
-
-    支持的命令:
-        - export: 导出 SAZ 文件中的会话信息
-        - extract: 从 SAZ 中提取文件/资源
-        - analyze: 分析 HTTP 流量模式
-    """
 
     @property
     def tool_name(self) -> str:

@@ -1,11 +1,4 @@
-﻿"""Process Monitor 适配器（纯 Python 实现）。
-
-使用 psutil 监控进程创建/退出，配合 watchdog 监控文件系统变化。
-不需要外部 Process Monitor exe。
-
-说明：需要安装 watchdog 库 `pip install watchdog`。
-psutil 和 watchdog 均为纯 Python 跨平台库，不依赖外部可执行文件。
-"""
+﻿# Process Monitor 适配器（纯 Python 实现），使用 psutil 监控进程变化，配合 watchdog 监控文件系统。
 
 import asyncio
 import csv
@@ -18,19 +11,8 @@ import psutil
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
 
+# Process Monitor 系统活动监控适配器，使用 psutil + watchdog 监控进程创建/退出和文件系统变化，支持 monitor_processes / monitor_files / watch_directory。
 class ProcessMonitorAdapter(BaseToolAdapter):
-    """Process Monitor 系统活动监控适配器（纯 Python 实现）。
-
-    使用 psutil 监控进程创建/退出，配合 watchdog 监控文件系统变化。
-    不需要外部 Process Monitor exe。
-
-    说明：需要安装 watchdog 库 `pip install watchdog`。
-
-    支持的动作:
-        - monitor_processes: 定期轮询，记录进程变化
-        - monitor_files: 监控目录下文件创建/修改/删除
-        - watch_directory: 监控目录并实时输出变更事件
-    """
 
     @property
     def tool_name(self) -> str:
@@ -57,15 +39,7 @@ class ProcessMonitorAdapter(BaseToolAdapter):
         self._monitor_thread: threading.Thread | None = None
 
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        Args:
-            params: 必须包含 "action" 键（默认 "monitor_processes"）。
-                    monitor_files / watch_directory 动作时还需要 "directory" 键。
-
-        Returns:
-            参数是否合法。
-        """
+        """验证 action 参数。monitor_files/watch_directory 时需要 directory。"""
         action = params.get("action", "monitor_processes")
         if action not in ("monitor_processes", "monitor_files", "watch_directory"):
             return False
@@ -73,17 +47,8 @@ class ProcessMonitorAdapter(BaseToolAdapter):
             return "directory" in params
         return True
 
-    # ------------------------------------------------------------------
-    # 动作：monitor_processes
-    # ------------------------------------------------------------------
     def _action_monitor_processes(self, params: dict) -> ToolResult:
-        """定期轮询进程列表，记录进程创建和退出事件。
-
-        参数:
-            duration: 监控持续时间（秒），默认 30。
-            output_file: 输出文件路径，写入 CSV 格式的进程变化日志。
-            include_details: 是否包含进程详细信息（路径、内存等），默认 True。
-        """
+        """监控进程创建和退出事件。duration: 监控时长(秒)，output_file: CSV 输出路径。"""
         duration = float(params.get("duration", 30))
         output_file = params.get("output_file", "process_changes.csv")
         include_details = params.get("include_details", True)
@@ -199,21 +164,8 @@ class ProcessMonitorAdapter(BaseToolAdapter):
             duration=duration_sec,
         )
 
-    # ------------------------------------------------------------------
-    # 动作：monitor_files
-    # ------------------------------------------------------------------
     def _action_monitor_files(self, params: dict) -> ToolResult:
-        """监控目录下文件创建/修改/删除事件。
-
-        使用 watchdog 库进行文件系统事件监控。
-
-        参数:
-            directory: 要监控的目录路径。
-            duration: 监控持续时间（秒），默认 30。
-            output_file: 输出文件路径，写入 CSV 格式的文件变更日志。
-            recursive: 是否递归监控子目录，默认 True。
-            patterns: 过滤的文件模式列表，如 ["*.txt", "*.log"]，默认监控所有文件。
-        """
+        """监控文件创建/修改/删除事件。directory: 监控目录，duration: 监控时长(秒)。"""
         directory = params["directory"]
         duration = float(params.get("duration", 30))
         output_file = params.get("output_file", "file_changes.csv")
@@ -320,39 +272,13 @@ class ProcessMonitorAdapter(BaseToolAdapter):
             duration=duration_sec,
         )
 
-    # ------------------------------------------------------------------
-    # 动作：watch_directory
-    # ------------------------------------------------------------------
     def _action_watch_directory(self, params: dict) -> ToolResult:
-        """监控目录并实时输出变更事件。
-
-        与 monitor_files 类似，但更侧重于实时输出，
-        并支持指定文件模式过滤。
-
-        参数:
-            directory: 要监控的目录路径。
-            duration: 监控持续时间（秒），默认 30。
-            output_file: 输出文件路径。
-            recursive: 是否递归监控子目录，默认 True。
-            patterns: 过滤的文件模式列表，如 ["*.txt", "*.log"]，默认监控所有文件。
-        """
-        # 复用 monitor_files 的实现，两者逻辑相同
+        """监控目录变更事件，与 monitor_files 行为一致。"""
         return self._action_monitor_files(params)
 
-    # ------------------------------------------------------------------
-    # 辅助方法
-    # ------------------------------------------------------------------
     @staticmethod
     def _write_events_csv(events: list[dict], output_file: str) -> str:
-        """将事件列表写入 CSV 文件。
-
-        Args:
-            events: 事件字典列表。
-            output_file: 输出文件路径。
-
-        Returns:
-            输出文件的绝对路径。
-        """
+        """将事件列表写入 CSV 文件，返回绝对路径。"""
         if not events:
             return ""
 
@@ -366,18 +292,8 @@ class ProcessMonitorAdapter(BaseToolAdapter):
 
         return os.path.abspath(output_file)
 
-    # ------------------------------------------------------------------
-    # 主入口
-    # ------------------------------------------------------------------
     async def run(self, params: dict) -> ToolResult:
-        """异步执行工具。
-
-        Args:
-            params: 参数字典，必须包含 "action" 键。
-
-        Returns:
-            ToolResult 执行结果。
-        """
+        """异步执行监控。action: monitor_processes/monitor_files/watch_directory。"""
         if not self.validate_input(params):
             return ToolResult(
                 success=False,

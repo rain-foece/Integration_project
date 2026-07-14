@@ -1,4 +1,4 @@
-﻿"""任务（Task）数据模型。"""
+# 任务（Task）数据模型
 
 from datetime import datetime
 from sqlalchemy import String, DateTime, ForeignKey, func, JSON, Enum as SAEnum
@@ -7,8 +7,8 @@ from server.models.database import Base
 import enum
 
 
+# 任务状态枚举
 class TaskStatus(str, enum.Enum):
-    """任务状态枚举。"""
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"

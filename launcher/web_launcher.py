@@ -1,12 +1,4 @@
-"""取证平台 - 浏览器模式启动器。
-
-后台启动 FastAPI 服务器，自动打开默认浏览器。
-
-用法:
-    python launcher/web_launcher.py              # 默认端口 8000
-    python launcher/web_launcher.py --port 8080  # 自定义端口
-    python launcher/web_launcher.py --no-browser # 不自动打开浏览器
-"""
+# 取证平台 - 浏览器模式启动器。
 
 import sys
 import time

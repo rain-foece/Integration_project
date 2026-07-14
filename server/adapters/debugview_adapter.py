@@ -1,9 +1,4 @@
-﻿"""DebugView 适配器（纯 Python 实现）。
-
-通过 ctypes 调用 kernel32.dll 使用 DBWIN 共享内存机制捕获 OutputDebugString 输出。
-说明：此实现只能捕获当前系统中的调试输出（通过 DBWIN 缓冲区），因为内核级捕获需要驱动加载。
-提供接口捕获 Python 进程的调试输出。
-"""
+﻿# DebugView 适配器（纯 Python 实现），通过 ctypes 调用 kernel32.dll 使用 DBWIN 共享内存机制捕获 OutputDebugString 输出。
 
 import asyncio
 import ctypes
@@ -15,9 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
-# ---------------------------------------------------------------------------
 # Win32 常量与类型定义
-# ---------------------------------------------------------------------------
 DBWIN_BUFFER_SIZE = 4096
 DBWIN_MUTEX = "DBWinMutex"
 DBWIN_BUFFER = "DBWIN_BUFFER"
@@ -98,19 +91,8 @@ ERROR_FILE_NOT_FOUND = 2
 ERROR_ALREADY_EXISTS = 183
 
 
+# DebugView 调试输出捕获适配器，通过 ctypes + DBWIN 共享内存捕获 OutputDebugString 输出，支持 capture_python / list_messages / filter_keyword 动作。
 class DebugViewAdapter(BaseToolAdapter):
-    """DebugView 调试输出捕获适配器（纯 Python 实现）。
-
-    使用 ctypes 通过 DBWIN 共享内存机制捕获系统中的 OutputDebugString 输出。
-
-    说明：此实现只能捕获当前系统中通过 OutputDebugString 输出的调试消息，
-    因为内核级捕获需要驱动加载。可捕获同一会话中任何进程的调试输出。
-
-    支持的动作:
-        - capture_python: 捕获 Python 进程的 OutputDebugString 调试输出
-        - list_messages: 列出已捕获的消息
-        - filter_keyword: 按关键字过滤已捕获的消息
-    """
 
     @property
     def tool_name(self) -> str:
@@ -138,15 +120,7 @@ class DebugViewAdapter(BaseToolAdapter):
         self._capture_thread: threading.Thread | None = None
 
     def validate_input(self, params: dict) -> bool:
-        """验证输入参数。
-
-        Args:
-            params: 必须包含 "action" 键（默认 "capture_python"）。
-                    filter_keyword 动作时还需要 "keyword" 键。
-
-        Returns:
-            参数是否合法。
-        """
+        """验证 action 参数。filter_keyword 时需要 keyword。"""
         action = params.get("action", "capture_python")
         if action not in ("capture_python", "list_messages", "filter_keyword"):
             return False
@@ -154,19 +128,8 @@ class DebugViewAdapter(BaseToolAdapter):
             return "keyword" in params
         return True
 
-    # ------------------------------------------------------------------
-    # DBWIN 共享内存捕获核心
-    # ------------------------------------------------------------------
+    # 通过 DBWIN 共享内存捕获调试输出。duration: 捕获时长（秒），0 表示无限；output_file: 可选输出文件路径。
     def _capture_dbwin(self, duration: float, output_file: str | None) -> list[dict]:
-        """在单独线程中通过 DBWIN 共享内存捕获调试输出。
-
-        Args:
-            duration: 捕获持续时间（秒），0 表示无限。
-            output_file: 可选的输出文件路径，将消息写入文件。
-
-        Returns:
-            捕获到的消息列表，每条消息为包含 pid 和 content 的字典。
-        """
         messages: list[dict] = []
         handle_mutex = None
         handle_mapping = None
@@ -176,14 +139,12 @@ class DebugViewAdapter(BaseToolAdapter):
         file_handle = None
 
         try:
-            # 1. 打开/创建 DBWinMutex
             handle_mutex = OpenMutexW(SYNCHRONIZE, False, DBWIN_MUTEX)
             if not handle_mutex:
                 handle_mutex = CreateMutexW(None, False, DBWIN_MUTEX)
             if not handle_mutex:
                 return messages
 
-            # 2. 打开 DBWIN_BUFFER 文件映射
             handle_mapping = OpenFileMappingW(FILE_MAP_READ, False, DBWIN_BUFFER)
             if not handle_mapping:
                 handle_mapping = CreateFileMappingW(
@@ -193,12 +154,10 @@ class DebugViewAdapter(BaseToolAdapter):
             if not handle_mapping:
                 return messages
 
-            # 3. 映射视图
             p_buffer = MapViewOfFile(handle_mapping, FILE_MAP_READ, 0, 0, DBWIN_BUFFER_SIZE)
             if not p_buffer:
                 return messages
 
-            # 4. 打开/创建事件
             handle_buffer_ready = OpenEventW(SYNCHRONIZE, False, DBWIN_BUFFER_READY)
             if not handle_buffer_ready:
                 handle_buffer_ready = CreateEventW(None, False, True, DBWIN_BUFFER_READY)
@@ -208,11 +167,9 @@ class DebugViewAdapter(BaseToolAdapter):
             if not handle_buffer_ready or not handle_data_ready:
                 return messages
 
-            # 5. 打开输出文件
             if output_file:
                 file_handle = open(output_file, "w", encoding="utf-8")
 
-            # 6. 捕获循环
             start_time = time.monotonic()
             wait_timeout = 1000  # 毫秒
 
@@ -273,19 +230,8 @@ class DebugViewAdapter(BaseToolAdapter):
 
         return messages
 
-    # ------------------------------------------------------------------
-    # 动作实现
-    # ------------------------------------------------------------------
     def _action_capture_python(self, params: dict) -> ToolResult:
-        """捕获 Python 进程的 OutputDebugString 调试输出。
-
-        通过 DBWIN 共享内存缓冲区实时读取系统调试输出，
-        过滤出 Python 进程的消息并写入文件。
-
-        参数:
-            duration: 捕获持续时间（秒），默认 30。
-            output_file: 输出文件路径，默认写入 captured_messages.txt。
-        """
+        """捕获 Python 进程的 OutputDebugString 输出。duration: 捕获时长(秒)，output_file: 输出文件路径。"""
         duration = float(params.get("duration", 30))
         output_file = params.get("output_file", "captured_messages.txt")
 
@@ -336,11 +282,7 @@ class DebugViewAdapter(BaseToolAdapter):
         )
 
     def _action_list_messages(self, params: dict) -> ToolResult:
-        """列出已捕获的消息。
-
-        返回当前内存中缓存的已捕获消息列表。
-        可指定 limit 限制返回数量。
-        """
+        """列出已捕获的消息。limit: 返回数量上限。"""
         limit = int(params.get("limit", 0))
         messages = self._captured_messages
         if limit > 0:
@@ -357,14 +299,7 @@ class DebugViewAdapter(BaseToolAdapter):
         )
 
     def _action_filter_keyword(self, params: dict) -> ToolResult:
-        """按关键字过滤已捕获的消息。
-
-        从已捕获的消息中筛选出包含指定关键字的消息。
-
-        参数:
-            keyword: 要过滤的关键字（不区分大小写）。
-            output_file: 可选，将过滤结果写入文件。
-        """
+        """按关键字过滤已捕获的消息。keyword: 过滤关键字(不区分大小写)，output_file: 可选输出文件。"""
         keyword = params.get("keyword", "")
         output_file = params.get("output_file", "")
 
@@ -393,18 +328,8 @@ class DebugViewAdapter(BaseToolAdapter):
             },
         )
 
-    # ------------------------------------------------------------------
-    # 主入口
-    # ------------------------------------------------------------------
     async def run(self, params: dict) -> ToolResult:
-        """异步执行工具。
-
-        Args:
-            params: 参数字典，必须包含 "action" 键。
-
-        Returns:
-            ToolResult 执行结果。
-        """
+        """异步执行工具。action: capture_python/list_messages/filter_keyword。"""
         if not self.validate_input(params):
             return ToolResult(
                 success=False,

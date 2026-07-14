@@ -1,4 +1,4 @@
-﻿"""案件（Case）数据模型。"""
+# 案件（Case）数据模型
 
 from datetime import datetime
 from sqlalchemy import String, DateTime, func, Enum as SAEnum
@@ -7,8 +7,8 @@ from server.models.database import Base
 import enum
 
 
+# 案件状态枚举
 class CaseStatus(str, enum.Enum):
-    """案件状态枚举。"""
     OPEN = "open"
     ANALYZING = "analyzing"
     CLOSED = "closed"

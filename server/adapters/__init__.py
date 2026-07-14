@@ -1,12 +1,7 @@
-﻿"""工具适配器模块。
-
-提供适配器注册表和基础适配器类。
-所有工具适配器统一在此注册，通过 register_adapter() 函数完成注册。
-"""
+﻿# 适配器注册表模块。
 
 from server.adapters.base_adapter import BaseToolAdapter, ToolResult
 
-# ── 导入所有适配器类 ──────────────────────────────────────────────
 from server.adapters.wireshark_adapter import WiresharkAdapter
 from server.adapters.fiddler_adapter import FiddlerAdapter
 from server.adapters.volatility_adapter import VolatilityAdapter
@@ -27,7 +22,6 @@ from server.adapters.debugview_adapter import DebugViewAdapter
 # 适配器注册表：tool_name -> AdapterClass
 _adapter_registry: dict[str, type[BaseToolAdapter]] = {}
 
-# ── 注册所有适配器 ────────────────────────────────────────────────
 # 网络流量分析
 _adapter_registry["wireshark"] = WiresharkAdapter
 _adapter_registry["fiddler"] = FiddlerAdapter
@@ -64,33 +58,17 @@ _adapter_registry["beyond_compare"] = BeyondCompareAdapter
 
 
 def register_adapter(tool_name: str, adapter_cls: type[BaseToolAdapter]) -> None:
-    """注册一个工具适配器。
-
-    Args:
-        tool_name: 工具名称
-        adapter_cls: 适配器类
-    """
+    """注册工具适配器。"""
     _adapter_registry[tool_name] = adapter_cls
 
 
 def get_adapter(tool_name: str) -> type[BaseToolAdapter] | None:
-    """获取已注册的工具适配器类。
-
-    Args:
-        tool_name: 工具名称
-
-    Returns:
-        适配器类或 None
-    """
+    """获取已注册的适配器类。"""
     return _adapter_registry.get(tool_name)
 
 
 def list_registered_adapters() -> dict[str, dict]:
-    """列出所有已注册的工具适配器及其元信息。
-
-    Returns:
-        {tool_name: tool_info} 字典
-    """
+    """列出所有已注册的适配器及元信息。"""
     result = {}
     for name, cls in _adapter_registry.items():
         instance = cls()

@@ -1,12 +1,12 @@
-﻿"""日志配置模块 — 使用 Python 内置 logging，无需外部依赖。"""
+# 日志配置模块 — 使用 Python 内置 logging，无需外部依赖
 
 import logging
 import sys
 from server.config import settings
 
 
+# 配置日志系统
 def setup_logging():
-    """配置日志系统。"""
     level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     fmt = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
@@ -23,14 +23,7 @@ def setup_logging():
     root_logger.setLevel(level)
 
 
+# 获取日志记录器
 def get_logger(name: str | None = None) -> logging.Logger:
-    """获取日志记录器。
-
-    Args:
-        name: 日志记录器名称
-
-    Returns:
-        Logger 实例
-    """
     logger = logging.getLogger(name or __name__)
     return logger

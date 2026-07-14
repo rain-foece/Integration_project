@@ -1,4 +1,4 @@
-"""应用配置模块，从环境变量读取配置项。"""
+# 应用配置模块，从环境变量读取配置项
 
 import os
 from pathlib import Path
@@ -6,16 +6,16 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 
 
+# 应用配置类，所有配置项均可通过环境变量覆盖
 class Settings(BaseSettings):
-    """应用配置类，所有配置项均可通过环境变量覆盖。"""
 
-    # ========== 应用基础配置 ==========
+    # 应用基础配置
     APP_NAME: str = "Forensics Tool Integration Platform"
     APP_VERSION: str = "1.0.0"
     APP_ENV: str = "development"
     DEBUG: bool = True
 
-    # ========== 数据库配置 ==========
+    # 数据库配置
     # 默认使用 SQLite（async 驱动），开发环境无需额外配置
     DATABASE_URL: str = "sqlite+aiosqlite:///./forensics.db"
 
@@ -26,12 +26,12 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 10
 
-    # ========== Redis 配置（Celery 消息队列） ==========
+    # Redis 配置（Celery 消息队列）
     REDIS_URL: str = "redis://localhost:6379/0"
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
 
-    # ========== 文件存储配置 ==========
+    # 文件存储配置
     # 证据文件存储根目录
     STORAGE_ROOT: str = str(Path(__file__).resolve().parent.parent / "storage")
     # 子目录
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
         ".exe", ".dll", ".sys", ".elf", ".macho",
     ]
 
-    # ========== API 配置 ==========
+    # API 配置
     API_V1_PREFIX: str = "/api/v1"
 
     # CORS 允许的来源
@@ -63,15 +63,15 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
 
-    # ========== 日志配置 ==========
+    # 日志配置
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"  # json 或 console
 
-    # ========== Celery 配置 ==========
+    # Celery 配置
     CELERY_TASK_TIME_LIMIT: int = 3600  # 任务超时时间（秒），默认 1 小时
     CELERY_TASK_SOFT_TIME_LIMIT: int = 3300  # 软超时
 
-    # ========== 工具适配器配置 ==========
+    # 工具适配器配置
     TOOLS_CONFIG_PATH: str = str(Path(__file__).resolve().parent.parent / "tools_config.yaml")
 
     class Config:
@@ -84,8 +84,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
+# 获取存储目录路径字典，并确保目录存在
 def get_storage_paths() -> dict:
-    """获取存储目录路径字典，并确保目录存在。"""
     base = Path(settings.STORAGE_ROOT)
     paths = {
         "evidence": base / settings.EVIDENCE_DIR,

@@ -1,4 +1,4 @@
-﻿"""审计日志（AuditLog）数据模型。"""
+# 审计日志（AuditLog）数据模型
 
 from datetime import datetime
 from sqlalchemy import String, DateTime, func, JSON
