@@ -16,8 +16,9 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # 数据库配置
-    # 默认使用 SQLite（async 驱动），开发环境无需额外配置
-    DATABASE_URL: str = "sqlite+aiosqlite:///./forensics.db"
+    # SQLite 数据库文件，固定放在项目根目录，无论从哪个目录启动都能找到
+    DB_PATH: str = str(Path(__file__).resolve().parent.parent / "forensics.db")
+    DATABASE_URL: str = ""
 
     # 切换 PostgreSQL 时使用：
     # DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/forensics"
@@ -82,6 +83,9 @@ class Settings(BaseSettings):
 
 # 全局配置单例
 settings = Settings()
+# 如果 DATABASE_URL 未通过环境变量设置，则使用项目根目录的 SQLite 数据库
+if not settings.DATABASE_URL:
+    settings.DATABASE_URL = f"sqlite+aiosqlite:///{settings.DB_PATH}"
 
 
 # 获取存储目录路径字典，并确保目录存在

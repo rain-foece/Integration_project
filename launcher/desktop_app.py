@@ -16,6 +16,12 @@ else:
     _ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT_DIR))
 
+# 使用 pythonw.exe 启动时没有控制台，重定向 stdout/stderr 到日志文件
+if sys.stdout is None:
+    sys.stdout = open(_ROOT_DIR / "error.log", "a", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = sys.stdout
+
 APP_TITLE = "电子数据取证工具集成系统"
 APP_VERSION = "v3.0"
 WINDOW_WIDTH = 1280
