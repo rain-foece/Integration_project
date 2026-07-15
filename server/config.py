@@ -65,8 +65,18 @@ class Settings(BaseSettings):
     ]
 
     # 日志配置
+    # 日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
     LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "json"  # json 或 console
+    LOG_DIR: str = "logs"
+    LOG_FORMAT: str = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+    LOG_DATE_FORMAT: str = "%Y-%m-%d %H:%M:%S"
+
+    # 运行模式："desktop" 或 "web"
+    RUN_MODE: str = "desktop"
+    # JWT 配置（网页模式需要）
+    JWT_SECRET: str = "change-me-in-production-use-a-random-string"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_HOURS: int = 24
 
     # Celery 配置
     CELERY_TASK_TIME_LIMIT: int = 3600  # 任务超时时间（秒），默认 1 小时

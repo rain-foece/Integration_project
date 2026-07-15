@@ -6,6 +6,7 @@ from server.models.evidence import Evidence
 from server.models.task import Task, TaskStatus
 from server.models.report import Report
 from server.models.audit_log import AuditLog
+from server.models.user import User
 
 __all__ = [
     "Base",

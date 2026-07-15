@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电子数据取证工具集成系统 - 登录</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "Segoe UI", "PingFang SC", system-ui, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+}
+.container { width: 400px; padding: 20px; }
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 40px 36px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.card h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 4px; }
+.card .subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 500; }
+.form-group input {
+  width: 100%; padding: 10px 14px; border: 1px solid #ddd;
+  border-radius: 8px; font-size: 14px; transition: border-color 0.2s;
+}
+.form-group input:focus { outline: none; border-color: #4B3FE3; }
+.btn {
+  width: 100%; padding: 12px; border: none; border-radius: 8px;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  margin-top: 8px;
+}
+.btn-primary { background: #4B3FE3; color: #fff; }
+.btn-primary:hover { background: #3C2ECA; }
+.btn-secondary { background: #f0f0f0; color: #555; margin-top: 6px; }
+.btn-secondary:hover { background: #e0e0e0; }
+.error-msg {
+  background: #FFF0F0; color: #E8463A; padding: 10px 14px;
+  border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: none;
+}
+.error-msg.show { display: block; }
+.toggle-link { text-align: center; margin-top: 16px; font-size: 13px; color: #888; }
+.toggle-link a { color: #4B3FE3; cursor: pointer; text-decoration: none; }
+.toggle-link a:hover { text-decoration: underline; }
+.footer { text-align: center; margin-top: 24px; font-size: 12px; color: rgba(255,255,255,0.5); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h1 id="pageTitle">登录</h1>
+    <p class="subtitle" id="pageSubtitle">电子数据取证工具集成系统</p>
+    <div class="error-msg" id="errorMsg"></div>
+    <form id="authForm">
+      <div class="form-group" id="emailGroup" style="display:none">
+        <label for="email">邮箱（选填）</label>
+        <input type="email" id="email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username" required placeholder="请输入用户名">
+      </div>
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" required placeholder="请输入密码">
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitBtn">登 录</button>
+    </form>
+    <p class="toggle-link">
+      <span id="toggleText">没有账号？</span> <a id="toggleLink" href="#">去注册</a>
+    </p>
+  </div>
+  <div class="footer">Forensics Platform v3.0</div>
+</div>
+
+<script>
+let isLogin = true;
+const apiBase = '/api/v1';
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+document.getElementById('toggleLink').addEventListener('click', function(e) {
+  e.preventDefault();
+  isLogin = !isLogin;
+  document.getElementById('pageTitle').textContent = isLogin ? '登录' : '注册';
+  document.getElementById('submitBtn').textContent = isLogin ? '登 录' : '注 册';
+  document.getElementById('toggleText').textContent = isLogin ? '没有账号？' : '已有账号？';
+  document.getElementById('toggleLink').textContent = isLogin ? '去注册' : '去登录';
+  document.getElementById('emailGroup').style.display = isLogin ? 'none' : 'block';
+});
+
+document.getElementById('authForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const email = document.getElementById('email').value.trim() || undefined;
+
+  if (!username || !password) {
+    showError('请填写用户名和密码');
+    return;
+  }
+
+  const endpoint = isLogin ? '/auth/login' : '/auth/register';
+  const body = isLogin ? { username, password } : { username, password, email };
+
+  try {
+    const resp = await fetch(apiBase + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      showError(data.error?.message || '操作失败');
+      return;
+    }
+    localStorage.setItem('token', data.access_token);
+    localStorage.setItem('username', data.username);
+    localStorage.setItem('role', data.role);
+    window.location.href = '/';
+  } catch (err) {
+    showError('网络错误，请检查服务器连接');
+  }
+});
+</script>
+</body>
+</html>

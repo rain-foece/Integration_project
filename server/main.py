@@ -16,8 +16,10 @@ from server.routers.evidences import router as evidences_router
 from server.routers.tasks import router as tasks_router
 from server.routers.reports import router as reports_router
 from server.routers.tools import router as tools_router
+from server.routers.auth import router as auth_router
 
 from server.routers.error_handlers import AppError, app_exception_handler, general_exception_handler
+from server.middleware.auth import AuthMiddleware
 
 setup_logging()
 logger = get_logger(__name__)
@@ -45,7 +47,7 @@ app = FastAPI(
     description="电子数据取证工具集成系统 - 后端 API",
     lifespan=lifespan,
 )
-
+# 允许跨域访问
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -53,6 +55,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# JWT 认证中间件（仅在 web 模式生效）
+app.add_middleware(AuthMiddleware)
 
 app.add_exception_handler(AppError, app_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
@@ -63,6 +68,7 @@ app.include_router(evidences_router, prefix=api_prefix)
 app.include_router(tasks_router, prefix=api_prefix)
 app.include_router(reports_router, prefix=api_prefix)
 app.include_router(tools_router, prefix=api_prefix)
+app.include_router(auth_router, prefix=api_prefix)
 
 # web/ 目录与 server/ 同级的项目根目录下
 web_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web")
@@ -74,6 +80,12 @@ app.mount("/static", StaticFiles(directory=web_dir), name="static")
 async def index():
     index_path = os.path.join(web_dir, "index.html")
     return FileResponse(index_path)
+
+
+@app.get("/login.html")
+async def login_page():
+    login_path = os.path.join(web_dir, "login.html")
+    return FileResponse(login_path)
 
 
 # 健康检查端点
